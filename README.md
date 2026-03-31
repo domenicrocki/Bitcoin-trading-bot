@@ -47,7 +47,7 @@ Alle Werte sind über das Dashboard anpassbar.
 - **Einstellungen** — KI-Anbieter, Trading-Paar, Intervall, Risiko-Parameter, Hebel, TP-Verteilung
 - **Echtzeit-Updates** über WebSocket mit Auto-Reconnect
 
----
+--
 
 ## Tech Stack
 
