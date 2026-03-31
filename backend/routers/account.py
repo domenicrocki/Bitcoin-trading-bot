@@ -13,16 +13,26 @@ router = APIRouter(prefix="/api", tags=["account"])
 
 
 @router.get("/account", response_model=AccountResponse)
-def get_account(db: Session = Depends(get_db)):
+async def get_account(db: Session = Depends(get_db)):
     latest_snapshot = (
         db.query(EquitySnapshot)
         .order_by(EquitySnapshot.timestamp.desc())
         .first()
     )
 
-    balance = latest_snapshot.balance if latest_snapshot else 0.0
-    equity = latest_snapshot.equity if latest_snapshot else 0.0
-    daily_pnl = latest_snapshot.daily_pnl if latest_snapshot else 0.0
+    # If no snapshots yet, fetch live balance from Binance
+    if latest_snapshot:
+        balance = latest_snapshot.balance
+        equity = latest_snapshot.equity
+        daily_pnl = latest_snapshot.daily_pnl or 0.0
+    else:
+        try:
+            balance = await engine.exchange.get_balance()
+            equity = balance
+        except Exception:
+            balance = 0.0
+            equity = 0.0
+        daily_pnl = 0.0
 
     closed_trades = db.query(Trade).filter(Trade.status == "CLOSED").all()
     total_closed = len(closed_trades)
