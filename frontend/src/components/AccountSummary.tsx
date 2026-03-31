@@ -141,7 +141,7 @@ export default function AccountSummary() {
     return <div style={styles.loading}>Lade Kontodaten...</div>;
   }
 
-  const winRatePct = account.win_rate * 100;
+  const winRatePct = account.win_rate; // Backend already returns 0-100%
   const drawdownWarning = account.max_drawdown >= 15;
 
   return (

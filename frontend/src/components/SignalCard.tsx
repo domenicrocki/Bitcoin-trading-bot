@@ -172,7 +172,7 @@ export default function SignalCard() {
   const lastSignal = useBotStore((s) => s.lastSignal);
 
   const latest: AnalysisEntry | null =
-    analyses && analyses.length > 0 ? analyses[0] : null;
+    analyses ?? null;
 
   const action = latest?.parsed_action?.toUpperCase() ?? lastSignal?.action ?? null;
   const confidence = latest?.confidence ?? lastSignal?.confidence ?? null;

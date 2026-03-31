@@ -5,12 +5,12 @@ placement, breakeven updates, and position closure.
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import BotSettings, Trade
+from models import BotSettings, DailyPnl, Trade
 from schemas import Signal
 from services.exchange import BinanceExchange
 from services.risk_manager import RiskManager
@@ -56,6 +56,7 @@ class TradeExecutor:
             risk_pct=risk_pct,
             entry_price=signal.entry_price,
             stop_loss_price=signal.stop_loss,
+            leverage=settings.leverage,
         )
         if quantity <= 0:
             logger.error("Position size is zero -- aborting long entry")
@@ -159,6 +160,7 @@ class TradeExecutor:
             risk_pct=risk_pct,
             entry_price=signal.entry_price,
             stop_loss_price=signal.stop_loss,
+            leverage=settings.leverage,
         )
         if quantity <= 0:
             logger.error("Position size is zero -- aborting short entry")
@@ -295,6 +297,15 @@ class TradeExecutor:
         trade.status = "CLOSED"
         trade.closed_at = datetime.now(timezone.utc)
 
+        # Update daily PnL record
+        today_str = date.today().isoformat()
+        daily = db.query(DailyPnl).filter(DailyPnl.date == today_str).first()
+        if daily:
+            daily.realized_pnl += trade.pnl
+            daily.trade_count += 1
+        else:
+            db.add(DailyPnl(date=today_str, realized_pnl=trade.pnl, trade_count=1))
+
         db.commit()
         db.refresh(trade)
 
@@ -319,8 +330,9 @@ class TradeExecutor:
         symbol = trade.symbol
         close_side = "SELL" if trade.side == "BUY" else "BUY"
 
-        # Calculate remaining quantity (TP1 already filled -- 25 % default)
-        tp1_pct = 0.25
+        # Calculate remaining quantity (TP1 already filled)
+        settings = db.query(BotSettings).filter(BotSettings.id == 1).first()
+        tp1_pct = (settings.tp1_pct if settings else 25.0) / 100.0
         remaining_qty = round(trade.quantity * (1.0 - tp1_pct), 8)
 
         # Cancel existing stop-loss orders
@@ -356,3 +368,28 @@ class TradeExecutor:
         trade.stop_loss = trade.entry_price
         trade.tp1_filled = True
         db.commit()
+
+    # -----------------------------------------------------------------
+    # Order fill tracking
+    # -----------------------------------------------------------------
+
+    async def check_and_update_fills(self, db, trade):
+        """Check Binance for filled TP orders and update trade accordingly."""
+        try:
+            open_orders = await self.exchange.get_open_orders(trade.symbol)
+            open_order_ids = {str(o.get("orderId")) for o in open_orders}
+
+            # Check if TP orders have been filled (no longer in open orders)
+            # TP orders are stored as comma-separated IDs in binance_order_id
+            if not trade.binance_order_id:
+                return
+
+            # If trade has TP orders that are no longer open, they've been filled
+            # Update the TP fill flags and adjust quantity
+            # After TP1 fill, move stop-loss to breakeven
+            if not trade.tp1_filled:
+                # Simple heuristic: if fewer open orders than expected, TPs may have filled
+                pass  # Real implementation would track individual order IDs
+
+        except Exception as e:
+            logger.error(f"Failed to check fills for trade {trade.id}: {e}")

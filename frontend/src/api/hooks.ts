@@ -60,7 +60,7 @@ export function useAccount() {
       const { data } = await apiClient.get<AccountInfo>("/account");
       return data;
     },
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
   });
 }
 
@@ -85,7 +85,7 @@ export function usePositions() {
       const { data } = await apiClient.get<Trade[]>("/positions");
       return data;
     },
-    refetchInterval: 10_000,
+    refetchInterval: 5_000,
   });
 }
 
@@ -184,5 +184,23 @@ export function useCandles(symbol: string, interval: string) {
       return data;
     },
     enabled: Boolean(symbol && interval),
+  });
+}
+
+// ── Close Position ──────────────────────────────────────────────────────────
+
+export function useClosePosition() {
+  const qc = useQueryClient();
+  return useMutation<{ status: string; trade_id: number; pnl: number }, Error, number>({
+    mutationFn: async (tradeId: number) => {
+      const { data } = await apiClient.post(`/positions/${tradeId}/close`);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.positions });
+      qc.invalidateQueries({ queryKey: keys.account });
+      qc.invalidateQueries({ queryKey: keys.equityCurve });
+      qc.invalidateQueries({ queryKey: keys.botStatus });
+    },
   });
 }

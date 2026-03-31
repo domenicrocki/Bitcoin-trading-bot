@@ -1,5 +1,5 @@
 import React from "react";
-import { usePositions } from "../api/hooks";
+import { usePositions, useClosePosition } from "../api/hooks";
 import { useBotStore } from "../store/useBotStore";
 import type { Trade } from "../types/index";
 
@@ -121,6 +121,8 @@ function TpCell({
 
 function PositionRow({ trade }: { trade: Trade }) {
   const currentPrice = useBotStore((s) => s.currentPrice);
+  const closePosition = useClosePosition();
+  const [confirmClose, setConfirmClose] = React.useState(false);
 
   const liveCurrent = currentPrice ?? trade.entry_price;
   const isLong = trade.side.toUpperCase() === "LONG" || trade.side.toUpperCase() === "BUY";
@@ -197,19 +199,43 @@ function PositionRow({ trade }: { trade: Trade }) {
         {formatPnlPct(livePnlPct)}
       </td>
       <td style={styles.td}>
-        <span
-          style={{
-            display: "inline-block",
-            padding: "3px 8px",
-            borderRadius: 4,
-            fontSize: 11,
-            fontWeight: 600,
-            background: "rgba(59, 130, 246, 0.12)",
-            color: "#3b82f6",
-          }}
-        >
-          {trade.status}
-        </span>
+        {confirmClose ? (
+          <span style={{ display: "inline-flex", gap: 4 }}>
+            <button
+              onClick={() => { closePosition.mutate(trade.id); setConfirmClose(false); }}
+              disabled={closePosition.isPending}
+              style={{
+                padding: "3px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600,
+                background: "rgba(239, 68, 68, 0.2)", color: "#ef4444",
+                border: "1px solid rgba(239, 68, 68, 0.4)", cursor: "pointer",
+              }}
+            >
+              {closePosition.isPending ? "..." : "Ja"}
+            </button>
+            <button
+              onClick={() => setConfirmClose(false)}
+              style={{
+                padding: "3px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600,
+                background: "rgba(100, 116, 139, 0.15)", color: "#94a3b8",
+                border: "1px solid rgba(100, 116, 139, 0.3)", cursor: "pointer",
+              }}
+            >
+              Nein
+            </button>
+          </span>
+        ) : (
+          <button
+            onClick={() => setConfirmClose(true)}
+            style={{
+              padding: "3px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600,
+              background: "rgba(239, 68, 68, 0.1)", color: "#ef4444",
+              border: "1px solid rgba(239, 68, 68, 0.25)", cursor: "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            Schlie\u00DFen
+          </button>
+        )}
       </td>
     </tr>
   );
@@ -261,7 +287,7 @@ export default function PositionsTable() {
               <th style={styles.th}>TP3</th>
               <th style={styles.th}>P&amp;L</th>
               <th style={styles.th}>P&amp;L%</th>
-              <th style={styles.th}>Status</th>
+              <th style={styles.th}>Aktion</th>
             </tr>
           </thead>
           <tbody>

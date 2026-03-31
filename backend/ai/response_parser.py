@@ -94,7 +94,7 @@ def parse_ai_response(response_text: str, current_price: float) -> Optional[Sign
 
     # For non-HOLD actions, check price reasonableness
     if action != "HOLD":
-        max_deviation = 0.20  # 20%
+        max_deviation = 0.30  # 30% - crypto is highly volatile
         price_lower = current_price * (1 - max_deviation)
         price_upper = current_price * (1 + max_deviation)
 
@@ -114,9 +114,9 @@ def parse_ai_response(response_text: str, current_price: float) -> Optional[Sign
             )
             return None
 
-        # Take-profits can be further out (up to 50% for aggressive TP3)
-        tp_upper = current_price * 1.50
-        tp_lower = current_price * 0.50
+        # Take-profits can be further out (up to 80% for aggressive TP3)
+        tp_upper = current_price * 1.80
+        tp_lower = current_price * 0.20
         for label, tp_val in [("TP1", tp1), ("TP2", tp2), ("TP3", tp3)]:
             if not (tp_lower <= tp_val <= tp_upper):
                 logger.warning(

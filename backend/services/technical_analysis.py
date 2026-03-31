@@ -49,8 +49,8 @@ def _bbands(series: pd.Series, length: int = 20, std: float = 2.0):
     rolling_std = series.rolling(window=length).std()
     upper = middle + std * rolling_std
     lower = middle - std * rolling_std
-    bandwidth = (upper - lower) / middle
-    percent_b = (series - lower) / (upper - lower)
+    bandwidth = (upper - lower) / middle.replace(0, np.nan)
+    percent_b = (series - lower) / (upper - lower).replace(0, np.nan)
     return lower, middle, upper, bandwidth, percent_b
 
 

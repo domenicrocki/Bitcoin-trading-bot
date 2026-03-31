@@ -108,7 +108,20 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok", "version": "1.0.0"}
+    from database import SessionLocal
+    from models import BotSettings
+    health = {"status": "ok", "version": "1.0.0"}
+    try:
+        db = SessionLocal()
+        db.query(BotSettings).first()
+        db.close()
+        health["database"] = "connected"
+    except Exception as e:
+        health["database"] = f"error: {e}"
+        health["status"] = "degraded"
+    health["scheduler"] = "running" if scheduler.running else "stopped"
+    health["bot_running"] = engine.is_running
+    return health
 
 
 if __name__ == "__main__":

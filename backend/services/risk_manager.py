@@ -78,9 +78,10 @@ class RiskManager:
         risk_pct: float,
         entry_price: float,
         stop_loss_price: float,
+        leverage: int = 1,
     ) -> float:
         """Calculate the maximum position quantity based on a fixed
-        percentage risk of total capital.
+        percentage risk of total capital, accounting for leverage.
 
         Parameters
         ----------
@@ -92,6 +93,8 @@ class RiskManager:
             Planned entry price.
         stop_loss_price : float
             Planned stop-loss price.
+        leverage : int
+            Leverage multiplier (default 1x).
 
         Returns
         -------
@@ -110,17 +113,18 @@ class RiskManager:
             logger.error("Entry and stop-loss are identical -- cannot size")
             return 0.0
 
+        leverage = max(1, leverage)
         risk_amount = balance * (risk_pct / 100.0)
         quantity = risk_amount / risk_per_unit
 
-        # Sanity cap: position notional must not exceed total balance
-        max_quantity = balance / entry_price
+        # Sanity cap: position notional must not exceed balance * leverage
+        max_quantity = (balance * leverage) / entry_price
         quantity = min(quantity, max_quantity)
 
         quantity = round(quantity, 8)
         logger.info(
-            "Position size: balance=%.2f risk=%.1f%% entry=%.4f sl=%.4f -> qty=%.8f",
-            balance, risk_pct, entry_price, stop_loss_price, quantity,
+            "Position size: balance=%.2f risk=%.1f%% leverage=%dx entry=%.4f sl=%.4f -> qty=%.8f",
+            balance, risk_pct, leverage, entry_price, stop_loss_price, quantity,
         )
         return quantity
 

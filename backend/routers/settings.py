@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,8 @@ from schemas import (
     SUPPORTED_INTERVALS,
 )
 from services.trading_engine import engine
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
@@ -49,6 +53,18 @@ def update_settings(payload: SettingsUpdate, db: Session = Depends(get_db)):
             detail=f"Unsupported interval. Supported: {SUPPORTED_INTERVALS}",
         )
 
+    # Validate TP split sums to 100
+    tp_fields = ["tp1_pct", "tp2_pct", "tp3_pct"]
+    if any(f in update_data for f in tp_fields):
+        tp1 = update_data.get("tp1_pct", settings.tp1_pct)
+        tp2 = update_data.get("tp2_pct", settings.tp2_pct)
+        tp3 = update_data.get("tp3_pct", settings.tp3_pct)
+        if abs(tp1 + tp2 + tp3 - 100.0) > 0.01:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Take-profit percentages must sum to 100 (got {tp1 + tp2 + tp3})",
+            )
+
     interval_changed = (
         "analysis_interval" in update_data
         and update_data["analysis_interval"] != settings.analysis_interval
@@ -63,7 +79,7 @@ def update_settings(payload: SettingsUpdate, db: Session = Depends(get_db)):
     if interval_changed:
         try:
             engine.reschedule(settings.analysis_interval)
-        except Exception:
-            pass  # Engine may not be running; ignore reschedule errors
+        except Exception as e:
+            logger.warning("Failed to reschedule: %s", e)
 
     return settings
