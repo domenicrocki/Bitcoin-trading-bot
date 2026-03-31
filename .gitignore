@@ -39,3 +39,6 @@ frontend/build/
 
 # Trading bot specific
 trading_bot.db
+
+# Downloaded packages
+*.deb
