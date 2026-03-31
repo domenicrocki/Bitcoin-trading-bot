@@ -17,7 +17,7 @@ function formatUptime(seconds: number | null | undefined): string {
 function formatTime(iso: string | null | undefined): string {
   if (!iso) return "--";
   try {
-    return new Date(iso).toLocaleTimeString("en-US", {
+    return new Date(iso).toLocaleTimeString("de-DE", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
@@ -36,7 +36,6 @@ export default function BotControls() {
 
   const isRunning = status?.is_running ?? false;
 
-  // Live uptime counter
   const [uptime, setUptime] = useState<number>(status?.uptime_seconds ?? 0);
 
   useEffect(() => {
@@ -74,7 +73,19 @@ export default function BotControls() {
 
   return (
     <div className="card">
-      <div className="card__header">
+      {/* Top row: Status + Buttons */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 12,
+          marginBottom: 16,
+          paddingBottom: 14,
+          borderBottom: "1px solid var(--border-primary, #1e293b)",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span
             className={`status-dot ${
@@ -85,55 +96,53 @@ export default function BotControls() {
           <span
             style={{
               fontSize: 12,
-              color: isRunning ? "var(--green)" : "var(--red)",
+              color: isRunning ? "var(--green, #10b981)" : "var(--red, #ef4444)",
               fontWeight: 600,
               textTransform: "uppercase",
               letterSpacing: 0.5,
             }}
           >
-            {isRunning ? "Running" : "Stopped"}
+            {isRunning ? "Aktiv" : "Gestoppt"}
           </span>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+
+        <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
           <button
             className={`btn ${isRunning ? "btn-danger" : "btn-success"}`}
             onClick={handleToggle}
             disabled={isPending}
           >
-            {isPending
-              ? "..."
-              : isRunning
-                ? "Stop Bot"
-                : "Start Bot"}
+            {isPending ? "..." : isRunning ? "Bot Stoppen" : "Bot Starten"}
           </button>
           <button
             className="btn btn-primary btn-sm"
             onClick={handleTrigger}
             disabled={!isRunning || triggerAnalysis.isPending}
           >
-            {triggerAnalysis.isPending ? "Analyzing..." : "Trigger Analysis"}
+            {triggerAnalysis.isPending ? "Analysiert..." : "Analyse Triggern"}
           </button>
         </div>
       </div>
 
+      {/* Bottom row: Stats */}
       <div className="stat-grid">
         <div className="stat-item">
-          <span className="stat-item__label">Uptime</span>
+          <span className="stat-item__label">Laufzeit</span>
           <span
             className="stat-item__value"
-            style={{ color: isRunning ? "var(--green)" : "var(--text-muted)" }}
+            style={{ color: isRunning ? "var(--green, #10b981)" : "var(--text-muted, #64748b)" }}
           >
             {formatUptime(uptime)}
           </span>
         </div>
         <div className="stat-item">
-          <span className="stat-item__label">Trading Pair</span>
+          <span className="stat-item__label">Handels-Paar</span>
           <span className="stat-item__value" style={{ fontSize: 16 }}>
             {status?.active_pair ?? "--"}
           </span>
         </div>
         <div className="stat-item">
-          <span className="stat-item__label">AI Provider</span>
+          <span className="stat-item__label">KI-Anbieter</span>
           <span
             className="stat-item__value"
             style={{ fontSize: 14, textTransform: "capitalize" }}
@@ -142,19 +151,19 @@ export default function BotControls() {
           </span>
         </div>
         <div className="stat-item">
-          <span className="stat-item__label">Open Positions</span>
+          <span className="stat-item__label">Offene Pos.</span>
           <span className="stat-item__value">
             {status?.open_positions ?? 0}
           </span>
         </div>
         <div className="stat-item">
-          <span className="stat-item__label">Last Analysis</span>
+          <span className="stat-item__label">Letzte Analyse</span>
           <span className="stat-item__value" style={{ fontSize: 14 }}>
             {formatTime(status?.last_analysis)}
           </span>
         </div>
         <div className="stat-item">
-          <span className="stat-item__label">Next Analysis</span>
+          <span className="stat-item__label">Nächste Analyse</span>
           <span className="stat-item__value" style={{ fontSize: 14 }}>
             {formatTime(status?.next_analysis)}
           </span>
