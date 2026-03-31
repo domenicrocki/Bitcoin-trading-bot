@@ -39,7 +39,7 @@ export default function CandlestickChart() {
 
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
-      height: 400,
+      height: 340,
       layout: {
         background: { type: ColorType.Solid, color: "#111827" },
         textColor: "#94a3b8",
