@@ -20,6 +20,8 @@ const keys = {
   positions: ["positions"] as const,
   trades: (limit: number, offset: number) =>
     ["trades", limit, offset] as const,
+  journal: (limit: number, offset: number) =>
+    ["journal", limit, offset] as const,
   latestAnalysis: ["latestAnalysis"] as const,
   botStatus: ["botStatus"] as const,
   candles: (symbol: string, interval: string) =>
@@ -130,6 +132,21 @@ export function useTriggerAnalysis() {
       qc.invalidateQueries({ queryKey: keys.positions });
       qc.invalidateQueries({ queryKey: keys.botStatus });
     },
+  });
+}
+
+// ── Journal (Analysis History) ───────────────────────────────────────────────
+
+export function useJournal(limit = 10, offset = 0) {
+  return useQuery<AnalysisEntry[]>({
+    queryKey: keys.journal(limit, offset),
+    queryFn: async () => {
+      const { data } = await apiClient.get<AnalysisEntry[]>("/journal", {
+        params: { limit, offset },
+      });
+      return data;
+    },
+    refetchInterval: 30_000,
   });
 }
 

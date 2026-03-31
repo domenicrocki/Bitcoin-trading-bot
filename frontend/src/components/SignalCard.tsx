@@ -353,7 +353,7 @@ export default function SignalCard() {
               marginBottom: 6,
             }}
           >
-            KI-Begr\u00FCndung
+            KI-Begründung
           </div>
           {reasoning}
         </div>
