@@ -1,5 +1,6 @@
 """Binance exchange API wrapper using python-binance AsyncClient."""
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Optional
@@ -28,10 +29,19 @@ class BinanceExchange:
     def __init__(self) -> None:
         self._client: Optional[AsyncClient] = None
         self._settings = get_settings()
+        self._initializing = False
 
     async def _ensure_client(self) -> AsyncClient:
-        """Lazily initialize and return the async client."""
-        if self._client is None:
+        """Lazily initialize and return the async client (singleton)."""
+        if self._client is not None:
+            return self._client
+        if self._initializing:
+            # Another coroutine is already creating the client; wait
+            while self._initializing:
+                await asyncio.sleep(0.05)
+            return self._client
+        self._initializing = True
+        try:
             kwargs: dict = {
                 "api_key": self._settings.binance_api_key,
                 "api_secret": self._settings.binance_api_secret,
@@ -41,6 +51,8 @@ class BinanceExchange:
             self._client = await AsyncClient.create(**kwargs)
             mode = "TESTNET" if self._settings.binance_testnet else "PRODUCTION"
             logger.info("Binance AsyncClient initialized in %s mode", mode)
+        finally:
+            self._initializing = False
         return self._client
 
     # ------------------------------------------------------------------
