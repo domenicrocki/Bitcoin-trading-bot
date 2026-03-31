@@ -94,6 +94,8 @@ class AnalysisResponse(BaseModel):
     risk_check_reason: Optional[str]
     trade_id: Optional[int]
     ai_reasoning: Optional[str] = None
+    ai_response: Optional[str] = None
+    notes: Optional[str] = None
 
     class Config:
         from_attributes = True

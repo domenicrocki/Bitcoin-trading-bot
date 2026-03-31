@@ -87,6 +87,8 @@ export interface AnalysisEntry {
   risk_check_reason: string | null;
   trade_id: number | null;
   ai_reasoning: string | null;
+  ai_response: string | null;
+  notes: string | null;
 }
 
 // ── Account ──────────────────────────────────────────────────────────────────
