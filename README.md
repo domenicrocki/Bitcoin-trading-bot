@@ -2,6 +2,12 @@
 
 Vollautomatischer KI-gestützter Kryptowährungs-Trading-Bot mit professionellem Dark-Theme Dashboard. Der Bot analysiert den Markt mithilfe von technischen Indikatoren und KI-Modellen (ChatGPT, Gemini oder Claude) und führt Trades automatisch über die Binance API aus.
 
+## Dashboard
+
+<p align="center">
+  <img src="docs/dashboard-preview.svg" alt="AI Trading Bot Dashboard" width="100%"/>
+</p>
+
 ---
 
 ## Features

@@ -1,0 +1,255 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" font-family="'Inter','SF Pro Display',-apple-system,system-ui,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a0e17"/><stop offset="100%" stop-color="#0d1220"/></linearGradient>
+    <linearGradient id="cardBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#111827"/><stop offset="100%" stop-color="#0f1520"/></linearGradient>
+    <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/></linearGradient>
+    <linearGradient id="blueGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient>
+    <linearGradient id="equityFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/><stop offset="100%" stop-color="#10b981" stop-opacity="0.02"/></linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <!-- Header -->
+  <rect x="0" y="0" width="1200" height="48" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+  <text x="20" y="30" font-size="15" font-weight="700"><tspan fill="#3b82f6">AI</tspan><tspan fill="#f1f5f9"> Trading Bot</tspan></text>
+  <circle cx="1100" cy="24" r="4" fill="#10b981"/><text x="1110" y="28" fill="#94a3b8" font-size="11">Live</text>
+  <text x="1150" y="28" fill="#64748b" font-size="11">|</text>
+  <text x="1162" y="28" fill="#94a3b8" font-size="11" font-weight="600">14:23</text>
+  <!-- Bot Controls Card -->
+  <rect x="16" y="60" width="1168" height="85" rx="10" fill="url(#cardBg)" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="36" cy="82" r="5" fill="#10b981"/><circle cx="36" cy="82" r="5" fill="#10b981" opacity="0.4"><animate attributeName="r" values="5;9;5" dur="2s" repeatCount="indefinite"/></circle>
+  <text x="48" y="86" fill="#f1f5f9" font-size="13" font-weight="600">Bot Controls</text>
+  <text x="140" y="86" fill="#10b981" font-size="11" font-weight="600">RUNNING</text>
+  <!-- Stop Button -->
+  <rect x="1040" y="72" width="80" height="30" rx="6" fill="#ef4444"/>
+  <text x="1060" y="92" fill="#fff" font-size="12" font-weight="600">Stop Bot</text>
+  <!-- Trigger button -->
+  <rect x="940" y="72" width="90" height="30" rx="6" fill="url(#blueGrad)"/>
+  <text x="949" y="92" fill="#fff" font-size="11" font-weight="600">Analyse ▶</text>
+  <!-- Stats row -->
+  <rect x="32" y="102" width="130" height="35" rx="6" fill="#1a1f2e" stroke="#1e293b" stroke-width="0.5"/>
+  <text x="42" y="115" fill="#64748b" font-size="9" font-weight="500">UPTIME</text>
+  <text x="42" y="130" fill="#10b981" font-size="14" font-weight="700" font-family="'JetBrains Mono',monospace">02:34:17</text>
+  <rect x="172" y="102" width="130" height="35" rx="6" fill="#1a1f2e" stroke="#1e293b" stroke-width="0.5"/>
+  <text x="182" y="115" fill="#64748b" font-size="9" font-weight="500">TRADING PAIR</text>
+  <text x="182" y="130" fill="#f1f5f9" font-size="14" font-weight="700" font-family="'JetBrains Mono',monospace">BTCUSDT</text>
+  <rect x="312" y="102" width="130" height="35" rx="6" fill="#1a1f2e" stroke="#1e293b" stroke-width="0.5"/>
+  <text x="322" y="115" fill="#64748b" font-size="9" font-weight="500">AI PROVIDER</text>
+  <text x="322" y="130" fill="#f1f5f9" font-size="13" font-weight="700">Claude</text>
+  <rect x="452" y="102" width="130" height="35" rx="6" fill="#1a1f2e" stroke="#1e293b" stroke-width="0.5"/>
+  <text x="462" y="115" fill="#64748b" font-size="9" font-weight="500">OPEN POSITIONS</text>
+  <text x="462" y="130" fill="#3b82f6" font-size="14" font-weight="700" font-family="'JetBrains Mono',monospace">2</text>
+  <rect x="592" y="102" width="130" height="35" rx="6" fill="#1a1f2e" stroke="#1e293b" stroke-width="0.5"/>
+  <text x="602" y="115" fill="#64748b" font-size="9" font-weight="500">LAST ANALYSIS</text>
+  <text x="602" y="130" fill="#f1f5f9" font-size="13" font-weight="700" font-family="'JetBrains Mono',monospace">14:15:00</text>
+  <rect x="732" y="102" width="130" height="35" rx="6" fill="#1a1f2e" stroke="#1e293b" stroke-width="0.5"/>
+  <text x="742" y="115" fill="#64748b" font-size="9" font-weight="500">NEXT ANALYSIS</text>
+  <text x="742" y="130" fill="#f1f5f9" font-size="13" font-weight="700" font-family="'JetBrains Mono',monospace">15:00:00</text>
+  <!-- Candlestick Chart Card -->
+  <rect x="16" y="155" width="780" height="290" rx="10" fill="url(#cardBg)" stroke="#1e293b" stroke-width="1"/>
+  <text x="32" y="178" fill="#f1f5f9" font-size="13" font-weight="600">BTCUSDT</text>
+  <text x="105" y="178" fill="#64748b" font-size="11">1h Candlestick</text>
+  <text x="680" y="178" fill="#f1f5f9" font-size="16" font-weight="700" font-family="'JetBrains Mono',monospace">$87,432.50</text>
+  <!-- Grid lines -->
+  <g stroke="#1e293b" stroke-width="0.5" opacity="0.5">
+    <line x1="32" y1="200" x2="780" y2="200"/><line x1="32" y1="240" x2="780" y2="240"/>
+    <line x1="32" y1="280" x2="780" y2="280"/><line x1="32" y1="320" x2="780" y2="320"/>
+    <line x1="32" y1="360" x2="780" y2="360"/>
+  </g>
+  <!-- Candlesticks -->
+  <g>
+    <!-- Green candles (up) -->
+    <line x1="60" y1="290" x2="60" y2="250" stroke="#10b981" stroke-width="1"/>
+    <rect x="56" y="260" width="8" height="20" fill="#10b981" rx="1"/>
+    <line x1="90" y1="310" x2="90" y2="270" stroke="#10b981" stroke-width="1"/>
+    <rect x="86" y="280" width="8" height="20" fill="#10b981" rx="1"/>
+    <line x1="120" y1="280" x2="120" y2="240" stroke="#ef4444" stroke-width="1"/>
+    <rect x="116" y="245" width="8" height="25" fill="#ef4444" rx="1"/>
+    <line x1="150" y1="290" x2="150" y2="250" stroke="#ef4444" stroke-width="1"/>
+    <rect x="146" y="255" width="8" height="25" fill="#ef4444" rx="1"/>
+    <line x1="180" y1="270" x2="180" y2="230" stroke="#10b981" stroke-width="1"/>
+    <rect x="176" y="240" width="8" height="20" fill="#10b981" rx="1"/>
+    <line x1="210" y1="260" x2="210" y2="220" stroke="#10b981" stroke-width="1"/>
+    <rect x="206" y="225" width="8" height="25" fill="#10b981" rx="1"/>
+    <line x1="240" y1="250" x2="240" y2="210" stroke="#10b981" stroke-width="1"/>
+    <rect x="236" y="215" width="8" height="25" fill="#10b981" rx="1"/>
+    <line x1="270" y1="260" x2="270" y2="220" stroke="#ef4444" stroke-width="1"/>
+    <rect x="266" y="225" width="8" height="22" fill="#ef4444" rx="1"/>
+    <line x1="300" y1="250" x2="300" y2="215" stroke="#10b981" stroke-width="1"/>
+    <rect x="296" y="220" width="8" height="20" fill="#10b981" rx="1"/>
+    <line x1="330" y1="240" x2="330" y2="200" stroke="#10b981" stroke-width="1"/>
+    <rect x="326" y="205" width="8" height="25" fill="#10b981" rx="1"/>
+    <line x1="360" y1="230" x2="360" y2="195" stroke="#10b981" stroke-width="1"/>
+    <rect x="356" y="200" width="8" height="20" fill="#10b981" rx="1"/>
+    <line x1="390" y1="225" x2="390" y2="190" stroke="#ef4444" stroke-width="1"/>
+    <rect x="386" y="195" width="8" height="22" fill="#ef4444" rx="1"/>
+    <line x1="420" y1="235" x2="420" y2="200" stroke="#ef4444" stroke-width="1"/>
+    <rect x="416" y="205" width="8" height="20" fill="#ef4444" rx="1"/>
+    <line x1="450" y1="230" x2="450" y2="195" stroke="#10b981" stroke-width="1"/>
+    <rect x="446" y="200" width="8" height="22" fill="#10b981" rx="1"/>
+    <line x1="480" y1="220" x2="480" y2="190" stroke="#10b981" stroke-width="1"/>
+    <rect x="476" y="195" width="8" height="18" fill="#10b981" rx="1"/>
+    <line x1="510" y1="215" x2="510" y2="185" stroke="#10b981" stroke-width="1"/>
+    <rect x="506" y="190" width="8" height="18" fill="#10b981" rx="1"/>
+    <line x1="540" y1="225" x2="540" y2="190" stroke="#ef4444" stroke-width="1"/>
+    <rect x="536" y="195" width="8" height="20" fill="#ef4444" rx="1"/>
+    <line x1="570" y1="220" x2="570" y2="188" stroke="#10b981" stroke-width="1"/>
+    <rect x="566" y="192" width="8" height="20" fill="#10b981" rx="1"/>
+    <line x1="600" y1="215" x2="600" y2="185" stroke="#10b981" stroke-width="1"/>
+    <rect x="596" y="190" width="8" height="18" fill="#10b981" rx="1"/>
+    <line x1="630" y1="210" x2="630" y2="182" stroke="#10b981" stroke-width="1"/>
+    <rect x="626" y="186" width="8" height="18" fill="#10b981" rx="1"/>
+    <line x1="660" y1="218" x2="660" y2="188" stroke="#ef4444" stroke-width="1"/>
+    <rect x="656" y="192" width="8" height="18" fill="#ef4444" rx="1"/>
+    <line x1="690" y1="212" x2="690" y2="185" stroke="#10b981" stroke-width="1"/>
+    <rect x="686" y="188" width="8" height="18" fill="#10b981" rx="1"/>
+    <line x1="720" y1="208" x2="720" y2="183" stroke="#10b981" stroke-width="1"/>
+    <rect x="716" y="186" width="8" height="16" fill="#10b981" rx="1"/>
+    <line x1="750" y1="205" x2="750" y2="180" stroke="#10b981" stroke-width="1"/>
+    <rect x="746" y="183" width="8" height="16" fill="#10b981" rx="1"/>
+  </g>
+  <!-- Volume bars -->
+  <g opacity="0.3">
+    <rect x="56" y="400" width="8" height="30" fill="#10b981"/>
+    <rect x="86" y="410" width="8" height="20" fill="#10b981"/>
+    <rect x="116" y="395" width="8" height="35" fill="#ef4444"/>
+    <rect x="146" y="405" width="8" height="25" fill="#ef4444"/>
+    <rect x="176" y="400" width="8" height="30" fill="#10b981"/>
+    <rect x="206" y="390" width="8" height="40" fill="#10b981"/>
+    <rect x="236" y="395" width="8" height="35" fill="#10b981"/>
+    <rect x="266" y="410" width="8" height="20" fill="#ef4444"/>
+    <rect x="296" y="405" width="8" height="25" fill="#10b981"/>
+    <rect x="326" y="395" width="8" height="35" fill="#10b981"/>
+    <rect x="356" y="390" width="8" height="40" fill="#10b981"/>
+    <rect x="386" y="410" width="8" height="20" fill="#ef4444"/>
+    <rect x="416" y="405" width="8" height="25" fill="#ef4444"/>
+    <rect x="446" y="400" width="8" height="30" fill="#10b981"/>
+    <rect x="476" y="405" width="8" height="25" fill="#10b981"/>
+    <rect x="506" y="395" width="8" height="35" fill="#10b981"/>
+    <rect x="536" y="410" width="8" height="20" fill="#ef4444"/>
+    <rect x="566" y="400" width="8" height="30" fill="#10b981"/>
+    <rect x="596" y="405" width="8" height="25" fill="#10b981"/>
+    <rect x="626" y="395" width="8" height="35" fill="#10b981"/>
+    <rect x="656" y="410" width="8" height="20" fill="#ef4444"/>
+    <rect x="686" y="400" width="8" height="30" fill="#10b981"/>
+    <rect x="716" y="395" width="8" height="35" fill="#10b981"/>
+    <rect x="746" y="385" width="8" height="45" fill="#10b981"/>
+  </g>
+  <!-- Settings Panel -->
+  <rect x="806" y="155" width="378" height="290" rx="10" fill="url(#cardBg)" stroke="#1e293b" stroke-width="1"/>
+  <text x="822" y="178" fill="#f1f5f9" font-size="15" font-weight="700">Einstellungen</text>
+  <!-- Settings fields -->
+  <text x="822" y="205" fill="#64748b" font-size="10" font-weight="500">KI-ANBIETER</text>
+  <rect x="822" y="210" width="346" height="30" rx="6" fill="#0f1117" stroke="#2a2d3a" stroke-width="1"/>
+  <text x="834" y="230" fill="#f1f5f9" font-size="12">Anthropic (Claude)</text>
+  <text x="822" y="258" fill="#64748b" font-size="10" font-weight="500">HANDELS-PAAR</text>
+  <rect x="822" y="263" width="346" height="30" rx="6" fill="#0f1117" stroke="#2a2d3a" stroke-width="1"/>
+  <text x="834" y="283" fill="#f1f5f9" font-size="12">BTCUSDT</text>
+  <text x="822" y="311" fill="#64748b" font-size="10" font-weight="500">ANALYSE-INTERVALL</text>
+  <rect x="822" y="316" width="168" height="28" rx="6" fill="#0f1117" stroke="#3b82f6" stroke-width="1"/>
+  <text x="880" y="335" fill="#3b82f6" font-size="12" font-weight="600" text-anchor="middle">1h</text>
+  <rect x="1000" y="316" width="168" height="28" rx="6" fill="#0f1117" stroke="#2a2d3a" stroke-width="1"/>
+  <text x="1060" y="335" fill="#94a3b8" font-size="12" text-anchor="middle">15m</text>
+  <text x="822" y="364" fill="#64748b" font-size="10" font-weight="500">HEBEL</text>
+  <rect x="822" y="369" width="165" height="28" rx="6" fill="#0f1117" stroke="#2a2d3a" stroke-width="1"/>
+  <text x="834" y="388" fill="#f1f5f9" font-size="12" font-family="'JetBrains Mono',monospace">3x</text>
+  <text x="1000" y="364" fill="#64748b" font-size="10" font-weight="500">MAX. RISIKO</text>
+  <rect x="1000" y="369" width="168" height="28" rx="6" fill="#0f1117" stroke="#2a2d3a" stroke-width="1"/>
+  <text x="1012" y="388" fill="#f1f5f9" font-size="12" font-family="'JetBrains Mono',monospace">1.0%</text>
+  <rect x="822" y="410" width="346" height="28" rx="6" fill="url(#blueGrad)"/>
+  <text x="995" y="429" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">Speichern</text>
+  <!-- Signal Card -->
+  <rect x="16" y="455" width="1168" height="80" rx="10" fill="url(#cardBg)" stroke="#065f46" stroke-width="1"/>
+  <rect x="32" y="470" width="60" height="28" rx="14" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+  <text x="48" y="489" fill="#10b981" font-size="12" font-weight="700">BUY</text>
+  <text x="110" y="483" fill="#64748b" font-size="10" font-weight="500">KONFIDENZ</text>
+  <rect x="110" y="490" width="200" height="5" rx="2" fill="#1e2130"/>
+  <rect x="110" y="490" width="164" height="5" rx="2" fill="#10b981"/>
+  <text x="320" y="498" fill="#10b981" font-size="13" font-weight="700" font-family="'JetBrains Mono',monospace">82%</text>
+  <text x="380" y="478" fill="#64748b" font-size="9">ENTRY</text>
+  <text x="380" y="498" fill="#f1f5f9" font-size="13" font-weight="600" font-family="'JetBrains Mono',monospace">$87,250</text>
+  <text x="480" y="478" fill="#64748b" font-size="9">STOP LOSS</text>
+  <text x="480" y="498" fill="#ef4444" font-size="13" font-weight="600" font-family="'JetBrains Mono',monospace">$86,380</text>
+  <text x="580" y="478" fill="#64748b" font-size="9">TP1</text>
+  <text x="580" y="498" fill="#10b981" font-size="13" font-weight="600" font-family="'JetBrains Mono',monospace">$88,100</text>
+  <text x="660" y="478" fill="#64748b" font-size="9">TP2</text>
+  <text x="660" y="498" fill="#10b981" font-size="13" font-weight="600" font-family="'JetBrains Mono',monospace">$89,500</text>
+  <text x="740" y="478" fill="#64748b" font-size="9">TP3</text>
+  <text x="740" y="498" fill="#10b981" font-size="13" font-weight="600" font-family="'JetBrains Mono',monospace">$91,200</text>
+  <rect x="840" y="472" width="70" height="22" rx="11" fill="rgba(59,130,246,0.15)" stroke="rgba(59,130,246,0.3)" stroke-width="1"/>
+  <text x="858" y="488" fill="#3b82f6" font-size="10" font-weight="600">Claude</text>
+  <text x="930" y="498" fill="#64748b" font-size="11">Bullish EMA-Alignment + MACD Crossover + RSI 58 ...</text>
+  <!-- Account Summary -->
+  <g>
+    <rect x="16" y="545" width="142" height="60" rx="8" fill="#1a1d29" stroke="#2a2d3a" stroke-width="0.5"/>
+    <text x="28" y="562" fill="#64748b" font-size="9" font-weight="600">KONTOSTAND</text>
+    <text x="28" y="582" fill="#f1f5f9" font-size="16" font-weight="800" font-family="'JetBrains Mono',monospace">10,450 USDT</text>
+    <rect x="166" y="545" width="142" height="60" rx="8" fill="#1a1d29" stroke="#2a2d3a" stroke-width="0.5"/>
+    <text x="178" y="562" fill="#64748b" font-size="9" font-weight="600">EIGENKAPITAL</text>
+    <text x="178" y="582" fill="#f1f5f9" font-size="16" font-weight="800" font-family="'JetBrains Mono',monospace">10,580 USDT</text>
+    <rect x="316" y="545" width="142" height="60" rx="8" fill="#1a1d29" stroke="#2a2d3a" stroke-width="0.5"/>
+    <text x="328" y="562" fill="#64748b" font-size="9" font-weight="600">GESAMT P&amp;L</text>
+    <text x="328" y="582" fill="#10b981" font-size="16" font-weight="800" font-family="'JetBrains Mono',monospace">+580 USDT</text>
+    <text x="328" y="596" fill="#10b981" font-size="10" font-weight="600">+5.80%</text>
+    <rect x="466" y="545" width="142" height="60" rx="8" fill="#1a1d29" stroke="#2a2d3a" stroke-width="0.5"/>
+    <text x="478" y="562" fill="#64748b" font-size="9" font-weight="600">GEWINNRATE</text>
+    <text x="478" y="582" fill="#10b981" font-size="16" font-weight="800" font-family="'JetBrains Mono',monospace">64.3%</text>
+    <rect x="478" y="590" width="116" height="3" rx="1" fill="#1e2130"/>
+    <rect x="478" y="590" width="75" height="3" rx="1" fill="#10b981"/>
+    <rect x="616" y="545" width="142" height="60" rx="8" fill="#1a1d29" stroke="#2a2d3a" stroke-width="0.5"/>
+    <text x="628" y="562" fill="#64748b" font-size="9" font-weight="600">TRADES</text>
+    <text x="628" y="582" fill="#f1f5f9" font-size="16" font-weight="800" font-family="'JetBrains Mono',monospace">14</text>
+    <rect x="766" y="545" width="142" height="60" rx="8" fill="#1a1d29" stroke="#2a2d3a" stroke-width="0.5"/>
+    <text x="778" y="562" fill="#64748b" font-size="9" font-weight="600">TAGES-P&amp;L</text>
+    <text x="778" y="582" fill="#10b981" font-size="16" font-weight="800" font-family="'JetBrains Mono',monospace">+125 USDT</text>
+    <rect x="916" y="545" width="142" height="60" rx="8" fill="#1a1d29" stroke="#2a2d3a" stroke-width="0.5"/>
+    <text x="928" y="562" fill="#64748b" font-size="9" font-weight="600">MAX. DRAWDOWN</text>
+    <text x="928" y="582" fill="#f59e0b" font-size="16" font-weight="800" font-family="'JetBrains Mono',monospace">3.2%</text>
+    <rect x="928" y="590" width="116" height="3" rx="1" fill="#1e2130"/>
+    <rect x="928" y="590" width="19" height="3" rx="1" fill="#f59e0b"/>
+    <rect x="1066" y="545" width="118" height="60" rx="8" fill="#1a1d29" stroke="#2a2d3a" stroke-width="0.5"/>
+    <text x="1078" y="562" fill="#64748b" font-size="9" font-weight="600">OFFENE POS.</text>
+    <text x="1078" y="582" fill="#3b82f6" font-size="16" font-weight="800" font-family="'JetBrains Mono',monospace">2</text>
+  </g>
+  <!-- Positions Table -->
+  <rect x="16" y="615" width="580" height="170" rx="10" fill="url(#cardBg)" stroke="#1e293b" stroke-width="1"/>
+  <text x="32" y="638" fill="#f1f5f9" font-size="13" font-weight="600">Offene Positionen</text>
+  <!-- Table header -->
+  <text x="32" y="660" fill="#64748b" font-size="9" font-weight="600">SYMBOL</text>
+  <text x="105" y="660" fill="#64748b" font-size="9" font-weight="600">SEITE</text>
+  <text x="165" y="660" fill="#64748b" font-size="9" font-weight="600">EINSTIEG</text>
+  <text x="255" y="660" fill="#64748b" font-size="9" font-weight="600">AKTUELL</text>
+  <text x="340" y="660" fill="#64748b" font-size="9" font-weight="600">SL</text>
+  <text x="420" y="660" fill="#64748b" font-size="9" font-weight="600">TP1</text>
+  <text x="490" y="660" fill="#64748b" font-size="9" font-weight="600">P&amp;L</text>
+  <line x1="32" y1="665" x2="580" y2="665" stroke="#1e293b" stroke-width="0.5"/>
+  <!-- Row 1 -->
+  <text x="32" y="685" fill="#f1f5f9" font-size="11" font-family="'JetBrains Mono',monospace">BTCUSDT</text>
+  <rect x="105" y="674" width="40" height="17" rx="9" fill="rgba(16,185,129,0.15)"/>
+  <text x="113" y="686" fill="#10b981" font-size="9" font-weight="700">LONG</text>
+  <text x="165" y="685" fill="#94a3b8" font-size="11" font-family="'JetBrains Mono',monospace">$86,500</text>
+  <text x="255" y="685" fill="#f1f5f9" font-size="11" font-family="'JetBrains Mono',monospace">$87,432</text>
+  <text x="340" y="685" fill="#ef4444" font-size="11" font-family="'JetBrains Mono',monospace">$85,800</text>
+  <text x="420" y="685" fill="#10b981" font-size="11" font-family="'JetBrains Mono',monospace">$87,900</text>
+  <text x="490" y="685" fill="#10b981" font-size="11" font-weight="600" font-family="'JetBrains Mono',monospace">+$93.20</text>
+  <!-- Row 2 -->
+  <text x="32" y="710" fill="#f1f5f9" font-size="11" font-family="'JetBrains Mono',monospace">ETHUSDT</text>
+  <rect x="105" y="699" width="45" height="17" rx="9" fill="rgba(239,68,68,0.15)"/>
+  <text x="112" y="711" fill="#ef4444" font-size="9" font-weight="700">SHORT</text>
+  <text x="165" y="710" fill="#94a3b8" font-size="11" font-family="'JetBrains Mono',monospace">$2,050</text>
+  <text x="255" y="710" fill="#f1f5f9" font-size="11" font-family="'JetBrains Mono',monospace">$2,035</text>
+  <text x="340" y="710" fill="#ef4444" font-size="11" font-family="'JetBrains Mono',monospace">$2,090</text>
+  <text x="420" y="710" fill="#10b981" font-size="11" font-family="'JetBrains Mono',monospace">$2,010</text>
+  <text x="490" y="710" fill="#10b981" font-size="11" font-weight="600" font-family="'JetBrains Mono',monospace">+$15.00</text>
+  <!-- Equity Curve Card -->
+  <rect x="606" y="615" width="578" height="170" rx="10" fill="url(#cardBg)" stroke="#1e293b" stroke-width="1"/>
+  <text x="622" y="638" fill="#f1f5f9" font-size="13" font-weight="700">Eigenkapitalverlauf</text>
+  <!-- Equity line chart -->
+  <polyline points="630,760 660,755 690,750 720,758 750,745 780,740 810,735 840,742 870,730 900,725 930,720 960,715 990,718 1020,710 1050,705 1080,700 1110,695 1140,688 1160,685"
+    fill="none" stroke="#10b981" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="630,760 660,755 690,750 720,758 750,745 780,740 810,735 840,742 870,730 900,725 930,720 960,715 990,718 1020,710 1050,705 1080,700 1110,695 1140,688 1160,685 1160,775 630,775"
+    fill="url(#equityFill)"/>
+  <!-- Y-axis labels -->
+  <text x="1162" y="690" fill="#64748b" font-size="9" font-family="'JetBrains Mono',monospace">10.5K</text>
+  <text x="1162" y="730" fill="#64748b" font-size="9" font-family="'JetBrains Mono',monospace">10.2K</text>
+  <text x="1162" y="765" fill="#64748b" font-size="9" font-family="'JetBrains Mono',monospace">10.0K</text>
+</svg>
