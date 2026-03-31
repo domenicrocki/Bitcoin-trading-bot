@@ -25,7 +25,11 @@ class Settings(BaseSettings):
     # Application
     database_url: str = "sqlite:///./trading_bot.db"
     log_level: str = "INFO"
-    cors_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    cors_origins: str = "http://localhost:5173,http://localhost:3000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
     model_config = {"env_file": str(_ENV_FILE), "env_file_encoding": "utf-8"}
 
