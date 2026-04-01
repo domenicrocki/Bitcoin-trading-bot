@@ -209,8 +209,8 @@ export default function SignalCard() {
   }
 
   const riskReward =
-    entryPrice && stopLoss && tp2
-      ? Math.abs(tp2 - entryPrice) / Math.abs(entryPrice - stopLoss)
+    entryPrice && stopLoss && tp1
+      ? Math.abs(tp1 - entryPrice) / Math.abs(entryPrice - stopLoss)
       : null;
 
   return (
@@ -331,7 +331,7 @@ export default function SignalCard() {
             <div
               style={{
                 ...styles.priceValue,
-                color: riskReward >= 2 ? "#22c55e" : riskReward >= 1 ? "#eab308" : "#ef4444",
+                color: riskReward >= 1.05 ? "#22c55e" : riskReward >= 1 ? "#eab308" : "#ef4444",
               }}
             >
               1 : {riskReward.toFixed(2)}
