@@ -6,7 +6,7 @@ and signal validation before any trade is executed.
 
 import logging
 from datetime import date, datetime
-from typing import Tuple
+from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -133,7 +133,7 @@ class RiskManager:
     # -----------------------------------------------------------------
 
     def check_daily_loss(
-        self, db: Session, settings: BotSettings | None = None
+        self, db: Session, settings: Optional[BotSettings] = None
     ) -> Tuple[float, bool]:
         """Return *(daily_pnl, is_warning)* for today's realised P&L.
 
@@ -182,7 +182,7 @@ class RiskManager:
     # -----------------------------------------------------------------
 
     def check_drawdown(
-        self, db: Session, settings: BotSettings | None = None
+        self, db: Session, settings: Optional[BotSettings] = None
     ) -> Tuple[float, bool]:
         """Return *(drawdown_pct, is_exceeded)* calculated from the peak
         equity recorded in snapshots vs the most recent snapshot.

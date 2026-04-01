@@ -57,6 +57,8 @@ async def lifespan(app: FastAPI):
     # Shutdown
     scheduler.shutdown()
     await engine.exchange.close()
+    if engine._kraken_exchange is not None:
+        await engine._kraken_exchange.close()
     logger.info("Application shutdown complete")
 
 

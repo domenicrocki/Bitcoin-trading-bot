@@ -100,7 +100,7 @@ def parse_ai_response(response_text: str, current_price: float) -> Optional[Sign
 
         if not (price_lower <= entry_price <= price_upper):
             logger.warning(
-                "Entry price %.2f is >20%% away from current price %.2f",
+                "Entry price %.2f is >30%% away from current price %.2f",
                 entry_price,
                 current_price,
             )
@@ -108,7 +108,7 @@ def parse_ai_response(response_text: str, current_price: float) -> Optional[Sign
 
         if not (price_lower <= stop_loss <= price_upper):
             logger.warning(
-                "Stop loss %.2f is >20%% away from current price %.2f",
+                "Stop loss %.2f is >30%% away from current price %.2f",
                 stop_loss,
                 current_price,
             )

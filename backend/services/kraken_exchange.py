@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Kraken exchange API wrapper using httpx AsyncClient."""
 
 import base64
@@ -6,7 +8,7 @@ import hmac
 import logging
 import time
 import urllib.parse
-from typing import Optional
+from typing import Dict, List, Optional
 
 import httpx
 import pandas as pd
