@@ -129,6 +129,19 @@ def parse_ai_response(response_text: str, current_price: float) -> Optional[Sign
 
     reasoning = str(data.get("reasoning", ""))
 
+    # Parse leverage (AI-determined, 1-10, default based on confidence)
+    try:
+        leverage = int(data.get("leverage", 1))
+        leverage = max(1, min(10, leverage))
+    except (ValueError, TypeError):
+        # Fallback: scale leverage from confidence
+        if confidence >= 90:
+            leverage = 5
+        elif confidence >= 80:
+            leverage = 3
+        else:
+            leverage = 1
+
     try:
         signal = Signal(
             action=action,
@@ -138,6 +151,7 @@ def parse_ai_response(response_text: str, current_price: float) -> Optional[Sign
             take_profit_1=tp1,
             take_profit_2=tp2,
             take_profit_3=tp3,
+            leverage=leverage,
             reasoning=reasoning,
         )
         return signal

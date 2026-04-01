@@ -263,14 +263,14 @@ class RiskManager:
         else:
             return False, f"Unexpected action '{signal.action}'"
 
-        # Risk-reward ratio (using TP1 as the minimum reward target -- min 1:2)
+        # Risk-reward ratio (using TP1 as the minimum reward target -- min 1:1.05)
         risk = abs(signal.entry_price - signal.stop_loss)
         reward = abs(signal.take_profit_1 - signal.entry_price)
         if risk == 0:
             return False, "Risk is zero (entry == stop-loss)"
         rrr = reward / risk
-        if rrr < 2.0:
-            reason = f"Risk-reward ratio too low ({rrr:.2f}:1, min 2:1)"
+        if rrr < 1.05:
+            reason = f"Risk-reward ratio too low ({rrr:.2f}:1, min 1.05:1)"
             logger.info("Signal rejected: %s", reason)
             return False, reason
 

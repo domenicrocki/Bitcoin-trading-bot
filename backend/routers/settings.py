@@ -11,6 +11,7 @@ from schemas import (
     SUPPORTED_PAIRS,
     SUPPORTED_AI_PROVIDERS,
     SUPPORTED_INTERVALS,
+    SUPPORTED_EXCHANGES,
 )
 from services.trading_engine import engine
 
@@ -51,6 +52,12 @@ def update_settings(payload: SettingsUpdate, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported interval. Supported: {SUPPORTED_INTERVALS}",
+        )
+
+    if "exchange" in update_data and update_data["exchange"] not in SUPPORTED_EXCHANGES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported exchange. Supported: {SUPPORTED_EXCHANGES}",
         )
 
     # Validate TP split sums to 100

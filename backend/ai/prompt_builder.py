@@ -98,12 +98,15 @@ def build_analysis_prompt(
     rules_section = (
         "=== RISK MANAGEMENT RULES ===\n"
         f"- {shorts_rule}\n"
-        "- Minimum Risk-to-Reward Ratio: 1:2 (reward must be at least 2x the risk).\n"
+        "- Minimum Risk-to-Reward Ratio: 1:1.05 (reward must exceed risk).\n"
         "- Maximum risk per trade: 1% of account balance.\n"
         "- If drawdown exceeds 10%, be more conservative (prefer HOLD).\n"
         "- Always set a stop-loss. Never recommend a trade without one.\n"
         "- Take-profit levels should be tiered (TP1 conservative, TP2 moderate, TP3 aggressive).\n"
         "- Consider recent trade history: avoid revenge trading after losses.\n"
+        "- You MUST choose a leverage between 1 and 10 for each trade.\n"
+        "- Scale leverage with confidence: low confidence (70-80%) = 1-3x, medium (80-90%) = 3-5x, high (90%+) = 5-10x.\n"
+        "- Higher leverage = higher risk. Be conservative with leverage when drawdown is high.\n"
     )
 
     # --- Response format ---
@@ -118,6 +121,7 @@ def build_analysis_prompt(
         '  "take_profit_1": <float>,\n'
         '  "take_profit_2": <float>,\n'
         '  "take_profit_3": <float>,\n'
+        '  "leverage": <integer 1-10>,\n'
         '  "reasoning": "<concise explanation of your analysis>"\n'
         "}\n\n"
         "If the recommendation is HOLD, set entry_price, stop_loss, and take_profit "

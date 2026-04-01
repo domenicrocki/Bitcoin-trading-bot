@@ -9,6 +9,7 @@ class BotSettings(Base):
 
     id = Column(Integer, primary_key=True, default=1)
     ai_provider = Column(String, nullable=False, default="openai")  # openai | gemini | anthropic
+    exchange = Column(String, nullable=False, default="binance")  # binance | kraken
     trading_pair = Column(String, nullable=False, default="BTCUSDT")
     leverage = Column(Integer, nullable=False, default=1)
     max_risk_pct = Column(Float, nullable=False, default=1.0)

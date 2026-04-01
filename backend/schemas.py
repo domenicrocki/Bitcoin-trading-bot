@@ -6,6 +6,7 @@ from datetime import datetime
 # === Settings ===
 class SettingsResponse(BaseModel):
     ai_provider: str
+    exchange: str
     trading_pair: str
     leverage: int
     max_risk_pct: float
@@ -26,6 +27,7 @@ class SettingsResponse(BaseModel):
 
 class SettingsUpdate(BaseModel):
     ai_provider: Optional[str] = None
+    exchange: Optional[str] = None
     trading_pair: Optional[str] = None
     leverage: Optional[int] = None
     max_risk_pct: Optional[float] = None
@@ -49,6 +51,7 @@ class Signal(BaseModel):
     take_profit_1: float
     take_profit_2: float
     take_profit_3: float
+    leverage: int = 1  # 1-10, AI decides based on confidence
     reasoning: str
 
 
@@ -144,3 +147,4 @@ class Candle(BaseModel):
 SUPPORTED_PAIRS = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "SOLUSDT", "TRXUSDT"]
 SUPPORTED_INTERVALS = ["15m", "1h"]
 SUPPORTED_AI_PROVIDERS = ["openai", "gemini", "anthropic"]
+SUPPORTED_EXCHANGES = ["binance", "kraken"]

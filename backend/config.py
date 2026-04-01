@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     binance_api_secret: str = ""
     binance_testnet: bool = True
 
+    # Kraken
+    kraken_api_key: str = ""
+    kraken_api_secret: str = ""
+
     # AI Providers
     openai_api_key: str = ""
     gemini_api_key: str = ""

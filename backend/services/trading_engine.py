@@ -50,6 +50,7 @@ class TradingEngine:
     def __init__(self) -> None:
         # --- Services ---
         self.exchange = BinanceExchange()
+        self._kraken_exchange = None  # lazy init
         self.risk_manager = RiskManager()
         self.ws_manager = ConnectionManager()
         self.journal = TradingJournal()
@@ -68,6 +69,15 @@ class TradingEngine:
         self.last_analysis: Optional[datetime] = None
         self._cycle_task: Optional[asyncio.Task] = None
         self._price_task: Optional[asyncio.Task] = None
+
+    def _get_exchange(self, exchange_name: str = "binance"):
+        """Return the exchange service for the given name."""
+        if exchange_name == "kraken":
+            if self._kraken_exchange is None:
+                from services.kraken_exchange import KrakenExchange
+                self._kraken_exchange = KrakenExchange()
+            return self._kraken_exchange
+        return self.exchange
 
     # ------------------------------------------------------------------
     # Properties
@@ -229,16 +239,21 @@ class TradingEngine:
         symbol = settings.trading_pair
         interval = settings.analysis_interval
         ai_provider_name = settings.ai_provider
+        exchange_name = getattr(settings, 'exchange', 'binance') or 'binance'
+        active_exchange = self._get_exchange(exchange_name)
 
-        logger.info("Starting analysis cycle for %s (%s)", symbol, interval)
+        # Update trade executor to use the active exchange
+        self.trade_executor.exchange = active_exchange
+
+        logger.info("Starting analysis cycle for %s (%s) on %s", symbol, interval, exchange_name)
 
         # ---------------------------------------------------------------
         # 2. Fetch market data (klines, price, balance)
         # ---------------------------------------------------------------
         try:
-            df = await self.exchange.get_klines(symbol, interval, limit=100)
-            current_price = await self.exchange.get_ticker_price(symbol)
-            balance = await self.exchange.get_balance()
+            df = await active_exchange.get_klines(symbol, interval, limit=100)
+            current_price = await active_exchange.get_ticker_price(symbol)
+            balance = await active_exchange.get_balance()
         except Exception as exc:
             logger.error("Failed to fetch market data: %s", exc)
             await self.ws_manager.broadcast_error(

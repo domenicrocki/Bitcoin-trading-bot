@@ -2,6 +2,7 @@
 
 export interface Settings {
   ai_provider: string;
+  exchange: string;
   trading_pair: string;
   leverage: number;
   max_risk_pct: number;
@@ -19,6 +20,7 @@ export interface Settings {
 
 export interface SettingsUpdate {
   ai_provider?: string;
+  exchange?: string;
   trading_pair?: string;
   leverage?: number;
   max_risk_pct?: number;
@@ -159,4 +161,9 @@ export const SUPPORTED_AI_PROVIDERS = [
   "openai",
   "gemini",
   "anthropic",
+] as const;
+
+export const SUPPORTED_EXCHANGES = [
+  "binance",
+  "kraken",
 ] as const;

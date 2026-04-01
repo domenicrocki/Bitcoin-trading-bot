@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSettings, useUpdateSettings } from "../api/hooks";
 import type { SettingsUpdate } from "../types/index";
 import {
+  SUPPORTED_EXCHANGES,
   SUPPORTED_PAIRS,
   SUPPORTED_AI_PROVIDERS,
   SUPPORTED_INTERVALS,
@@ -247,6 +248,7 @@ export default function SettingsPanel() {
     if (settings) {
       setForm({
         ai_provider: settings.ai_provider,
+        exchange: settings.exchange,
         trading_pair: settings.trading_pair,
         analysis_interval: settings.analysis_interval,
         leverage: settings.leverage,
@@ -316,6 +318,20 @@ export default function SettingsPanel() {
               {SUPPORTED_AI_PROVIDERS.map((p) => (
                 <option key={p} value={p}>
                   {AI_PROVIDER_LABELS[p]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Börse</label>
+            <select
+              style={styles.select}
+              value={form.exchange ?? "binance"}
+              onChange={(e) => updateField("exchange", e.target.value)}
+            >
+              {SUPPORTED_EXCHANGES.map((ex) => (
+                <option key={ex} value={ex}>
+                  {ex === "binance" ? "Binance" : "Kraken"}
                 </option>
               ))}
             </select>

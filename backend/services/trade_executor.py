@@ -51,12 +51,18 @@ class TradeExecutor:
         symbol = settings.trading_pair
         risk_pct = settings.max_risk_pct or 1.0
 
+        # Use AI-determined leverage, capped by max from settings
+        ai_leverage = getattr(signal, 'leverage', 1) or 1
+        effective_leverage = min(ai_leverage, settings.leverage or 10)
+        logger.info("LONG trade leverage: AI=%dx, max=%dx, effective=%dx",
+                     ai_leverage, settings.leverage or 10, effective_leverage)
+
         quantity = self.risk_manager.calculate_position_size(
             balance=balance,
             risk_pct=risk_pct,
             entry_price=signal.entry_price,
             stop_loss_price=signal.stop_loss,
-            leverage=settings.leverage,
+            leverage=effective_leverage,
         )
         if quantity <= 0:
             logger.error("Position size is zero -- aborting long entry")
@@ -155,12 +161,18 @@ class TradeExecutor:
         symbol = settings.trading_pair
         risk_pct = settings.max_risk_pct or 1.0
 
+        # Use AI-determined leverage, capped by max from settings
+        ai_leverage = getattr(signal, 'leverage', 1) or 1
+        effective_leverage = min(ai_leverage, settings.leverage or 10)
+        logger.info("SHORT trade leverage: AI=%dx, max=%dx, effective=%dx",
+                     ai_leverage, settings.leverage or 10, effective_leverage)
+
         quantity = self.risk_manager.calculate_position_size(
             balance=balance,
             risk_pct=risk_pct,
             entry_price=signal.entry_price,
             stop_loss_price=signal.stop_loss,
-            leverage=settings.leverage,
+            leverage=effective_leverage,
         )
         if quantity <= 0:
             logger.error("Position size is zero -- aborting short entry")
