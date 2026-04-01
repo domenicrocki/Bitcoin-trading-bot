@@ -133,7 +133,7 @@ class BinanceExchange:
             symbol=symbol,
             side=side.upper(),
             type=ORDER_TYPE_MARKET,
-            quantity=f"{quantity:.8f}",
+            quantity=str(quantity),
         )
         logger.info(
             "Market %s order placed: %s qty=%s  orderId=%s",
@@ -154,8 +154,8 @@ class BinanceExchange:
             side=side.upper(),
             type=ORDER_TYPE_LIMIT,
             timeInForce=TIME_IN_FORCE_GTC,
-            quantity=f"{quantity:.8f}",
-            price=f"{price:.8f}",
+            quantity=str(quantity),
+            price=str(price),
         )
         logger.info(
             "Limit %s order placed: %s qty=%s price=%s  orderId=%s",
@@ -176,8 +176,8 @@ class BinanceExchange:
             symbol=symbol,
             side=side.upper(),
             type=ORDER_TYPE_STOP_LOSS,
-            quantity=f"{quantity:.8f}",
-            stopPrice=f"{stop_price:.8f}",
+            quantity=str(quantity),
+            stopPrice=str(stop_price),
         )
         logger.info(
             "Stop-loss %s order placed: %s qty=%s stop=%s  orderId=%s",

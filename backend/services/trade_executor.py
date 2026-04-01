@@ -5,6 +5,7 @@ placement, breakeven updates, and position closure.
 """
 
 import logging
+import math
 from datetime import date, datetime, timezone
 from typing import Optional
 
@@ -17,6 +18,30 @@ from services.risk_manager import RiskManager
 from services.websocket_manager import ConnectionManager
 
 logger = logging.getLogger(__name__)
+
+# Quantity precision per asset (decimal places for Binance lot size)
+_QTY_PRECISION = {
+    "BTCUSDT": 5, "ETHUSDT": 4, "BNBUSDT": 2, "XRPUSDT": 0,
+    "SOLUSDT": 2, "TRXUSDT": 0,
+}
+# Price precision per asset
+_PRICE_PRECISION = {
+    "BTCUSDT": 2, "ETHUSDT": 2, "BNBUSDT": 2, "XRPUSDT": 4,
+    "SOLUSDT": 2, "TRXUSDT": 5,
+}
+
+
+def _round_qty(symbol: str, qty: float) -> float:
+    """Round quantity to the exchange's lot-size precision."""
+    prec = _QTY_PRECISION.get(symbol, 5)
+    factor = 10 ** prec
+    return math.floor(qty * factor) / factor
+
+
+def _round_price(symbol: str, price: float) -> float:
+    """Round price to the exchange's tick-size precision."""
+    prec = _PRICE_PRECISION.get(symbol, 2)
+    return round(price, prec)
 
 
 class TradeExecutor:
@@ -64,32 +89,38 @@ class TradeExecutor:
             stop_loss_price=signal.stop_loss,
             leverage=effective_leverage,
         )
+        # Round quantity for exchange precision
+        quantity = _round_qty(symbol, quantity)
         if quantity <= 0:
-            logger.error("Position size is zero -- aborting long entry")
+            logger.error("Position size is zero after rounding -- aborting long entry")
             return None
+
+        logger.info("LONG entry: %s qty=%.8f @ ~%.2f (SL=%.2f, TP1=%.2f)",
+                     symbol, quantity, signal.entry_price, signal.stop_loss, signal.take_profit_1)
 
         # --- Market BUY ----------------------------------------------------
         try:
             entry_order = await self.exchange.place_market_order(
                 symbol=symbol, side="BUY", quantity=quantity,
             )
-        except Exception:
-            logger.exception("Failed to place market BUY for %s", symbol)
-            return None
+        except Exception as exc:
+            logger.exception("FAILED to place market BUY for %s: %s", symbol, exc)
+            raise  # Re-raise so trading_engine logs it as execution error
 
         filled_price = float(
             entry_order.get("fills", [{}])[0].get("price", signal.entry_price)
         )
         order_id = str(entry_order.get("orderId", ""))
+        logger.info("Market BUY filled: %s orderId=%s price=%.2f", symbol, order_id, filled_price)
 
         # --- TP split quantities -------------------------------------------
         tp1_pct = (settings.tp1_pct or 25.0) / 100.0
         tp2_pct = (settings.tp2_pct or 50.0) / 100.0
         tp3_pct = (settings.tp3_pct or 25.0) / 100.0
 
-        tp1_qty = round(quantity * tp1_pct, 8)
-        tp2_qty = round(quantity * tp2_pct, 8)
-        tp3_qty = round(quantity - tp1_qty - tp2_qty, 8)  # remainder avoids rounding drift
+        tp1_qty = _round_qty(symbol, quantity * tp1_pct)
+        tp2_qty = _round_qty(symbol, quantity * tp2_pct)
+        tp3_qty = _round_qty(symbol, quantity - tp1_qty - tp2_qty)
 
         # --- Limit SELL orders for TPs ------------------------------------
         for tp_price, tp_qty, label in [
@@ -97,9 +128,13 @@ class TradeExecutor:
             (signal.take_profit_2, tp2_qty, "TP2"),
             (signal.take_profit_3, tp3_qty, "TP3"),
         ]:
+            if tp_qty <= 0:
+                logger.warning("%s quantity is 0 after rounding, skipping", label)
+                continue
             try:
                 await self.exchange.place_limit_order(
-                    symbol=symbol, side="SELL", quantity=tp_qty, price=tp_price,
+                    symbol=symbol, side="SELL", quantity=tp_qty,
+                    price=_round_price(symbol, tp_price),
                 )
                 logger.info(
                     "%s SELL order placed: qty=%.8f @ %.4f", label, tp_qty, tp_price,
@@ -111,7 +146,7 @@ class TradeExecutor:
         try:
             await self.exchange.place_stop_loss(
                 symbol=symbol, side="SELL", quantity=quantity,
-                stop_price=signal.stop_loss,
+                stop_price=_round_price(symbol, signal.stop_loss),
             )
         except Exception:
             logger.exception("Failed to place stop-loss for long %s", symbol)
@@ -174,32 +209,37 @@ class TradeExecutor:
             stop_loss_price=signal.stop_loss,
             leverage=effective_leverage,
         )
+        quantity = _round_qty(symbol, quantity)
         if quantity <= 0:
-            logger.error("Position size is zero -- aborting short entry")
+            logger.error("Position size is zero after rounding -- aborting short entry")
             return None
+
+        logger.info("SHORT entry: %s qty=%.8f @ ~%.2f (SL=%.2f, TP1=%.2f)",
+                     symbol, quantity, signal.entry_price, signal.stop_loss, signal.take_profit_1)
 
         # --- Market SELL ---------------------------------------------------
         try:
             entry_order = await self.exchange.place_market_order(
                 symbol=symbol, side="SELL", quantity=quantity,
             )
-        except Exception:
-            logger.exception("Failed to place market SELL for %s", symbol)
-            return None
+        except Exception as exc:
+            logger.exception("FAILED to place market SELL for %s: %s", symbol, exc)
+            raise  # Re-raise so trading_engine logs it
 
         filled_price = float(
             entry_order.get("fills", [{}])[0].get("price", signal.entry_price)
         )
         order_id = str(entry_order.get("orderId", ""))
+        logger.info("Market SELL filled: %s orderId=%s price=%.2f", symbol, order_id, filled_price)
 
         # --- TP split quantities -------------------------------------------
         tp1_pct = (settings.tp1_pct or 25.0) / 100.0
         tp2_pct = (settings.tp2_pct or 50.0) / 100.0
         tp3_pct = (settings.tp3_pct or 25.0) / 100.0
 
-        tp1_qty = round(quantity * tp1_pct, 8)
-        tp2_qty = round(quantity * tp2_pct, 8)
-        tp3_qty = round(quantity - tp1_qty - tp2_qty, 8)
+        tp1_qty = _round_qty(symbol, quantity * tp1_pct)
+        tp2_qty = _round_qty(symbol, quantity * tp2_pct)
+        tp3_qty = _round_qty(symbol, quantity - tp1_qty - tp2_qty)
 
         # --- Limit BUY orders for TPs (shorts close by buying) ------------
         for tp_price, tp_qty, label in [
@@ -207,9 +247,13 @@ class TradeExecutor:
             (signal.take_profit_2, tp2_qty, "TP2"),
             (signal.take_profit_3, tp3_qty, "TP3"),
         ]:
+            if tp_qty <= 0:
+                logger.warning("%s quantity is 0 after rounding, skipping", label)
+                continue
             try:
                 await self.exchange.place_limit_order(
-                    symbol=symbol, side="BUY", quantity=tp_qty, price=tp_price,
+                    symbol=symbol, side="BUY", quantity=tp_qty,
+                    price=_round_price(symbol, tp_price),
                 )
                 logger.info(
                     "%s BUY order placed: qty=%.8f @ %.4f", label, tp_qty, tp_price,
@@ -221,7 +265,7 @@ class TradeExecutor:
         try:
             await self.exchange.place_stop_loss(
                 symbol=symbol, side="BUY", quantity=quantity,
-                stop_price=signal.stop_loss,
+                stop_price=_round_price(symbol, signal.stop_loss),
             )
         except Exception:
             logger.exception("Failed to place stop-loss for short %s", symbol)
