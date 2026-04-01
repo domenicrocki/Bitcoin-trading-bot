@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Trade
+from models import Trade, BotSettings
 from schemas import TradeResponse
 from services.trading_engine import engine
 
@@ -14,10 +14,12 @@ router = APIRouter(prefix="/api", tags=["positions"])
 @router.get("/positions", response_model=List[TradeResponse])
 async def get_open_positions(db: Session = Depends(get_db)):
     trades = db.query(Trade).filter(Trade.status == "OPEN").order_by(Trade.opened_at.desc()).all()
+    settings = db.query(BotSettings).filter(BotSettings.id == 1).first()
+    active_exchange = engine._get_exchange(getattr(settings, 'exchange', 'binance') or 'binance')
     # Calculate unrealized P&L for each position
     for trade in trades:
         try:
-            current_price = await engine.exchange.get_ticker_price(trade.symbol)
+            current_price = await active_exchange.get_ticker_price(trade.symbol)
             if trade.side == "BUY":
                 trade.pnl = round((current_price - trade.entry_price) * trade.quantity, 2)
             else:
@@ -34,7 +36,9 @@ async def close_position(trade_id: int, db: Session = Depends(get_db)):
     if not trade:
         raise HTTPException(status_code=404, detail="Open position not found")
     try:
-        current_price = await engine.exchange.get_ticker_price(trade.symbol)
+        settings = db.query(BotSettings).filter(BotSettings.id == 1).first()
+        active_exchange = engine._get_exchange(getattr(settings, 'exchange', 'binance') or 'binance')
+        current_price = await active_exchange.get_ticker_price(trade.symbol)
         closed = await engine.trade_executor.close_position(db, trade, current_price)
         return {"status": "closed", "trade_id": closed.id, "pnl": closed.pnl}
     except Exception as e:

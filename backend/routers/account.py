@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from database import get_db
-from models import Trade, EquitySnapshot, DailyPnl
+from models import Trade, EquitySnapshot, DailyPnl, BotSettings
 from schemas import AccountResponse, EquityPoint, Candle, SUPPORTED_PAIRS, SUPPORTED_INTERVALS
 from services.trading_engine import engine
 
@@ -27,7 +27,9 @@ async def get_account(db: Session = Depends(get_db)):
         daily_pnl = latest_snapshot.daily_pnl or 0.0
     else:
         try:
-            balance = await engine.exchange.get_balance()
+            settings = db.query(BotSettings).filter(BotSettings.id == 1).first()
+            active_exchange = engine._get_exchange(getattr(settings, 'exchange', 'binance') or 'binance')
+            balance = await active_exchange.get_balance()
             equity = balance
         except Exception:
             balance = 0.0
@@ -96,6 +98,7 @@ async def get_candles(
     symbol: str = Query(default="BTCUSDT"),
     interval: str = Query(default="1h"),
     limit: int = Query(default=100, ge=1, le=500),
+    db: Session = Depends(get_db),
 ):
     if symbol not in SUPPORTED_PAIRS:
         raise HTTPException(status_code=400, detail=f"Unsupported pair: {symbol}")
@@ -103,7 +106,9 @@ async def get_candles(
         raise HTTPException(status_code=400, detail=f"Unsupported interval: {interval}")
 
     try:
-        df = await engine.exchange.get_klines(symbol, interval, limit=limit)
+        settings = db.query(BotSettings).filter(BotSettings.id == 1).first()
+        active_exchange = engine._get_exchange(getattr(settings, 'exchange', 'binance') or 'binance')
+        df = await active_exchange.get_klines(symbol, interval, limit=limit)
         candles = []
         for idx, row in df.iterrows():
             # idx is a pandas Timestamp (the DataFrame index is "timestamp")
