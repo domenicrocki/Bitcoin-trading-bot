@@ -11,25 +11,28 @@ const AI_PROVIDER_LABELS: Record<string, string> = {
 
 const ACTION_CONFIG: Record<
   string,
-  { color: string; bg: string; border: string; icon: string }
+  { color: string; bg: string; border: string; icon: string; label: string }
 > = {
   BUY: {
     color: "#22c55e",
     bg: "rgba(34, 197, 94, 0.12)",
     border: "rgba(34, 197, 94, 0.4)",
     icon: "\u2191",
+    label: "LONG",
   },
   SELL: {
     color: "#ef4444",
     bg: "rgba(239, 68, 68, 0.12)",
     border: "rgba(239, 68, 68, 0.4)",
     icon: "\u2193",
+    label: "SHORT",
   },
   HOLD: {
     color: "#94a3b8",
     bg: "rgba(148, 163, 184, 0.12)",
     border: "rgba(148, 163, 184, 0.3)",
     icon: "\u2194",
+    label: "HOLD",
   },
 };
 
@@ -244,7 +247,7 @@ export default function SignalCard() {
           }}
         >
           <span style={{ fontSize: 32 }}>{cfg.icon}</span>
-          {action}
+          {cfg.label}
         </div>
       </div>
 

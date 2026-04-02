@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { useJournal } from "../api/hooks";
 import type { AnalysisEntry } from "../types/index";
 
-const ACTION_COLORS: Record<string, { bg: string; color: string }> = {
-  BUY: { bg: "rgba(34, 197, 94, 0.12)", color: "#22c55e" },
-  SELL: { bg: "rgba(239, 68, 68, 0.12)", color: "#ef4444" },
-  HOLD: { bg: "rgba(245, 158, 11, 0.12)", color: "#f59e0b" },
+const ACTION_COLORS: Record<string, { bg: string; color: string; label: string }> = {
+  BUY: { bg: "rgba(34, 197, 94, 0.12)", color: "#22c55e", label: "LONG" },
+  SELL: { bg: "rgba(239, 68, 68, 0.12)", color: "#ef4444", label: "SHORT" },
+  HOLD: { bg: "rgba(245, 158, 11, 0.12)", color: "#f59e0b", label: "HOLD" },
 };
 
 function formatDate(iso: string | null): string {
@@ -64,7 +64,7 @@ export default function AnalysisHistory() {
         <div>
           {entries.map((entry: AnalysisEntry) => {
             const action = entry.parsed_action?.toUpperCase() ?? "—";
-            const actionStyle = ACTION_COLORS[action] ?? { bg: "rgba(100,116,139,0.1)", color: "#64748b" };
+            const actionStyle = ACTION_COLORS[action] ?? { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: action };
             const isExpanded = expandedId === entry.id;
             const reasoning = extractReasoning(entry);
 
@@ -87,7 +87,7 @@ export default function AnalysisHistory() {
                       {entry.ai_provider}
                     </span>
                     <span style={{ ...styles.badge, background: actionStyle.bg, color: actionStyle.color }}>
-                      {action}
+                      {actionStyle.label}
                     </span>
                     <span style={styles.confidence}>
                       {entry.confidence != null ? `${entry.confidence}%` : "-"}

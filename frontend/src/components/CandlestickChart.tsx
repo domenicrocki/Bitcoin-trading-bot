@@ -11,11 +11,11 @@ import {
   CrosshairMode,
   LineStyle,
 } from "lightweight-charts";
-import { useCandles, useBotStatus, useSettings } from "../api/hooks";
+import { useCandles, useBotStatus, useSettings, useUpdateSettings } from "../api/hooks";
 import { useBotStore } from "../store/useBotStore";
 import type { Candle } from "../types/index";
 
-// ── Indicator calculations (client-side from candle data) ───────────────────
+// ── Indicator calculations ──────────────────────────────────────────────────
 
 function calcSMA(data: Candle[], period: number): LineData[] {
   const result: LineData[] = [];
@@ -42,9 +42,7 @@ function calcEMA(data: Candle[], period: number): LineData[] {
 }
 
 function calcBollingerBands(data: Candle[], period: number = 20, mult: number = 2) {
-  const upper: LineData[] = [];
-  const middle: LineData[] = [];
-  const lower: LineData[] = [];
+  const upper: LineData[] = [], middle: LineData[] = [], lower: LineData[] = [];
   for (let i = period - 1; i < data.length; i++) {
     let sum = 0;
     for (let j = i - period + 1; j <= i; j++) sum += data[j].close;
@@ -60,23 +58,62 @@ function calcBollingerBands(data: Candle[], period: number = 20, mult: number = 
   return { upper, middle, lower };
 }
 
-// ── Indicator config ────────────────────────────────────────────────────────
+function fmtPrice(v: number): string {
+  if (v >= 1000) return v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (v >= 1) return v.toFixed(4);
+  return v.toFixed(6);
+}
+
+// ── Config ──────────────────────────────────────────────────────────────────
 
 type IndicatorKey = "sma20" | "sma50" | "ema9" | "ema21" | "bb" | "volume";
 
-interface IndicatorDef {
-  label: string;
-  color: string;
-  defaultOn: boolean;
-}
+const INDICATORS: Record<IndicatorKey, { label: string; color: string; defaultOn: boolean }> = {
+  ema9:   { label: "EMA 9",     color: "#f59e0b", defaultOn: false },
+  ema21:  { label: "EMA 21",    color: "#8b5cf6", defaultOn: false },
+  sma20:  { label: "SMA 20",    color: "#3b82f6", defaultOn: true },
+  sma50:  { label: "SMA 50",    color: "#ec4899", defaultOn: false },
+  bb:     { label: "Bollinger", color: "#06b6d4", defaultOn: false },
+  volume: { label: "Vol",       color: "#64748b", defaultOn: true },
+};
 
-const INDICATORS: Record<IndicatorKey, IndicatorDef> = {
-  ema9:  { label: "EMA 9",  color: "#f59e0b", defaultOn: false },
-  ema21: { label: "EMA 21", color: "#8b5cf6", defaultOn: false },
-  sma20: { label: "SMA 20", color: "#3b82f6", defaultOn: true },
-  sma50: { label: "SMA 50", color: "#ec4899", defaultOn: false },
-  bb:    { label: "Bollinger", color: "#06b6d4", defaultOn: false },
-  volume:{ label: "Volumen",  color: "#64748b", defaultOn: true },
+const TIMEFRAMES = [
+  { label: "15m", value: "15m" },
+  { label: "1H",  value: "1h" },
+];
+
+// ── Styles ──────────────────────────────────────────────────────────────────
+
+const S = {
+  wrapper: { background: "#0d1117", border: "1px solid #1e293b", borderRadius: 10, overflow: "hidden" as const },
+  header: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px 0", flexWrap: "wrap" as const, gap: 8 },
+  headerLeft: { display: "flex", alignItems: "center", gap: 10 },
+  pair: { fontSize: 18, fontWeight: 800, color: "#f1f5f9", letterSpacing: -0.5 },
+  ohlc: { display: "flex", gap: 12, fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: "#94a3b8" },
+  ohlcLabel: { color: "#475569", marginRight: 3 },
+  ohlcUp: { color: "#10b981" },
+  ohlcDown: { color: "#ef4444" },
+  price: { fontSize: 20, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", color: "#f1f5f9" },
+  change: { fontSize: 13, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", padding: "2px 8px", borderRadius: 4 },
+  toolbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 14px", borderBottom: "1px solid #1e293b", flexWrap: "wrap" as const, gap: 6 },
+  tfGroup: { display: "flex", gap: 2 },
+  tfBtn: (active: boolean) => ({
+    padding: "4px 12px", borderRadius: 4, fontSize: 12, fontWeight: 700, cursor: "pointer",
+    border: "none",
+    background: active ? "#3b82f6" : "transparent",
+    color: active ? "#fff" : "#64748b",
+    transition: "all 0.15s",
+  }),
+  indGroup: { display: "flex", gap: 4, flexWrap: "wrap" as const },
+  indBtn: (active: boolean, color: string) => ({
+    padding: "3px 8px", borderRadius: 3, fontSize: 10, fontWeight: 700, cursor: "pointer",
+    border: `1px solid ${active ? color : "rgba(100,116,139,0.2)"}`,
+    background: active ? `${color}18` : "transparent",
+    color: active ? color : "#475569",
+    transition: "all 0.12s",
+    letterSpacing: 0.3,
+  }),
+  chart: { width: "100%", height: 380 },
 };
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -90,229 +127,178 @@ export default function CandlestickChart() {
 
   const { data: status } = useBotStatus();
   const { data: settings } = useSettings();
+  const updateSettings = useUpdateSettings();
   const pair = status?.active_pair ?? "BTCUSDT";
   const interval = settings?.analysis_interval ?? "1h";
   const { data: candles } = useCandles(pair, interval);
   const currentPrice = useBotStore((s) => s.currentPrice);
 
+  // OHLC of last candle
+  const lastCandle = candles && candles.length > 0 ? candles[candles.length - 1] : null;
+  const prevClose = candles && candles.length > 1 ? candles[candles.length - 2].close : null;
+  const priceChange = lastCandle && prevClose ? lastCandle.close - prevClose : null;
+  const priceChangePct = priceChange && prevClose ? (priceChange / prevClose) * 100 : null;
+  const isUp = (priceChange ?? 0) >= 0;
+
   const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(() => {
-    const defaults = new Set<IndicatorKey>();
-    for (const [key, def] of Object.entries(INDICATORS)) {
-      if (def.defaultOn) defaults.add(key as IndicatorKey);
-    }
-    return defaults;
+    const d = new Set<IndicatorKey>();
+    for (const [k, v] of Object.entries(INDICATORS)) { if (v.defaultOn) d.add(k as IndicatorKey); }
+    return d;
   });
 
   const toggleIndicator = (key: IndicatorKey) => {
-    setActiveIndicators((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+    setActiveIndicators((prev) => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
   };
 
-  // Initialize chart
+  const switchTimeframe = (tf: string) => {
+    if (tf !== interval) updateSettings.mutate({ analysis_interval: tf });
+  };
+
+  // Init chart
   const initChart = useCallback(() => {
     if (!containerRef.current) return;
-    if (chartRef.current) {
-      chartRef.current.remove();
-      chartRef.current = null;
-    }
+    if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
     overlaySeriesRef.current.clear();
 
     const chart = createChart(containerRef.current, {
-      width: containerRef.current.clientWidth,
-      height: 340,
-      layout: {
-        background: { type: ColorType.Solid, color: "#111827" },
-        textColor: "#94a3b8",
-        fontSize: 11,
-        fontFamily: "'Inter', -apple-system, sans-serif",
-      },
-      grid: {
-        vertLines: { color: "rgba(30, 41, 59, 0.4)" },
-        horzLines: { color: "rgba(30, 41, 59, 0.4)" },
-      },
+      width: containerRef.current.clientWidth, height: 380,
+      layout: { background: { type: ColorType.Solid, color: "#0d1117" }, textColor: "#64748b", fontSize: 11, fontFamily: "'JetBrains Mono', monospace" },
+      grid: { vertLines: { color: "rgba(30,41,59,0.3)" }, horzLines: { color: "rgba(30,41,59,0.3)" } },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: { color: "rgba(59, 130, 246, 0.4)", width: 1, style: 2, labelBackgroundColor: "#3b82f6" },
-        horzLine: { color: "rgba(59, 130, 246, 0.4)", width: 1, style: 2, labelBackgroundColor: "#3b82f6" },
+        vertLine: { color: "rgba(59,130,246,0.3)", width: 1, style: LineStyle.Dashed, labelBackgroundColor: "#1e293b" },
+        horzLine: { color: "rgba(59,130,246,0.3)", width: 1, style: LineStyle.Dashed, labelBackgroundColor: "#1e293b" },
       },
-      rightPriceScale: { borderColor: "#1e293b", scaleMargins: { top: 0.05, bottom: 0.2 } },
-      timeScale: { borderColor: "#1e293b", timeVisible: true, secondsVisible: false, rightOffset: 3, barSpacing: 7 },
+      rightPriceScale: { borderColor: "#1e293b", scaleMargins: { top: 0.05, bottom: 0.18 }, entireTextOnly: true },
+      timeScale: { borderColor: "#1e293b", timeVisible: true, secondsVisible: false, rightOffset: 5, barSpacing: 8 },
       handleScroll: { vertTouchDrag: false },
     });
 
-    const candleSeries = chart.addCandlestickSeries({
-      upColor: "#10b981",
-      downColor: "#ef4444",
-      borderUpColor: "#10b981",
-      borderDownColor: "#ef4444",
-      wickUpColor: "#10b981",
-      wickDownColor: "#ef4444",
+    const cs = chart.addCandlestickSeries({
+      upColor: "#10b981", downColor: "#ef4444",
+      borderUpColor: "#10b981", borderDownColor: "#ef4444",
+      wickUpColor: "#10b981", wickDownColor: "#ef4444",
     });
 
     chartRef.current = chart;
-    candleSeriesRef.current = candleSeries;
+    candleSeriesRef.current = cs;
   }, []);
 
-  useEffect(() => {
-    initChart();
-    return () => {
-      if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
-    };
-  }, [initChart]);
+  useEffect(() => { initChart(); return () => { if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; } }; }, [initChart]);
 
   // Resize
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !chartRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width } = entry.contentRect;
-        if (chartRef.current && width > 0) chartRef.current.applyOptions({ width });
-      }
-    });
-    observer.observe(container);
-    return () => observer.disconnect();
+    const c = containerRef.current;
+    if (!c || !chartRef.current) return;
+    const obs = new ResizeObserver((e) => { for (const en of e) { if (chartRef.current && en.contentRect.width > 0) chartRef.current.applyOptions({ width: en.contentRect.width }); } });
+    obs.observe(c);
+    return () => obs.disconnect();
   }, []);
 
-  // Load candle data + overlays
+  // Data + overlays
   useEffect(() => {
     if (!candles || candles.length === 0 || !chartRef.current || !candleSeriesRef.current) return;
 
-    const candleData: CandlestickData[] = candles.map((c) => ({
-      time: (c.time / 1000) as Time, open: c.open, high: c.high, low: c.low, close: c.close,
-    }));
-    candleSeriesRef.current.setData(candleData);
-    if (candleData.length > 0) lastCandleRef.current = candleData[candleData.length - 1];
+    const cd: CandlestickData[] = candles.map((c) => ({ time: (c.time / 1000) as Time, open: c.open, high: c.high, low: c.low, close: c.close }));
+    candleSeriesRef.current.setData(cd);
+    if (cd.length > 0) lastCandleRef.current = cd[cd.length - 1];
 
-    // Remove old overlays
-    for (const [, series] of overlaySeriesRef.current) {
-      try { chartRef.current.removeSeries(series); } catch { /* */ }
-    }
+    for (const [, s] of overlaySeriesRef.current) { try { chartRef.current.removeSeries(s); } catch {} }
     overlaySeriesRef.current.clear();
 
     // Volume
     if (activeIndicators.has("volume")) {
-      const volSeries = chartRef.current.addHistogramSeries({
-        priceFormat: { type: "volume" },
-        priceScaleId: "volume",
-      });
-      chartRef.current.priceScale("volume").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
-      volSeries.setData(candles.map((c) => ({
-        time: (c.time / 1000) as Time,
-        value: c.volume,
-        color: c.close >= c.open ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)",
-      })));
-      overlaySeriesRef.current.set("volume", volSeries);
+      const vs = chartRef.current.addHistogramSeries({ priceFormat: { type: "volume" }, priceScaleId: "vol" });
+      chartRef.current.priceScale("vol").applyOptions({ scaleMargins: { top: 0.84, bottom: 0 } });
+      vs.setData(candles.map((c) => ({ time: (c.time / 1000) as Time, value: c.volume, color: c.close >= c.open ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)" })));
+      overlaySeriesRef.current.set("volume", vs);
     }
 
-    // SMA / EMA lines
-    const lineOverlays: { key: IndicatorKey; data: LineData[]; color: string }[] = [];
-    if (activeIndicators.has("sma20")) lineOverlays.push({ key: "sma20", data: calcSMA(candles, 20), color: INDICATORS.sma20.color });
-    if (activeIndicators.has("sma50")) lineOverlays.push({ key: "sma50", data: calcSMA(candles, 50), color: INDICATORS.sma50.color });
-    if (activeIndicators.has("ema9"))  lineOverlays.push({ key: "ema9",  data: calcEMA(candles, 9),  color: INDICATORS.ema9.color });
-    if (activeIndicators.has("ema21")) lineOverlays.push({ key: "ema21", data: calcEMA(candles, 21), color: INDICATORS.ema21.color });
-
-    for (const { key, data, color } of lineOverlays) {
-      const s = chartRef.current.addLineSeries({ color, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
-      s.setData(data);
-      overlaySeriesRef.current.set(key, s);
+    // Lines
+    const lines: { k: string; d: LineData[]; c: string }[] = [];
+    if (activeIndicators.has("sma20")) lines.push({ k: "sma20", d: calcSMA(candles, 20), c: INDICATORS.sma20.color });
+    if (activeIndicators.has("sma50")) lines.push({ k: "sma50", d: calcSMA(candles, 50), c: INDICATORS.sma50.color });
+    if (activeIndicators.has("ema9")) lines.push({ k: "ema9", d: calcEMA(candles, 9), c: INDICATORS.ema9.color });
+    if (activeIndicators.has("ema21")) lines.push({ k: "ema21", d: calcEMA(candles, 21), c: INDICATORS.ema21.color });
+    for (const { k, d, c } of lines) {
+      const s = chartRef.current.addLineSeries({ color: c, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+      s.setData(d); overlaySeriesRef.current.set(k, s);
     }
 
-    // Bollinger Bands
+    // BB
     if (activeIndicators.has("bb")) {
       const bb = calcBollingerBands(candles, 20, 2);
-      const bbColor = INDICATORS.bb.color;
-      const upperS = chartRef.current.addLineSeries({ color: bbColor, lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false });
-      const midS = chartRef.current.addLineSeries({ color: bbColor, lineWidth: 1, lineStyle: LineStyle.Dotted, priceLineVisible: false, lastValueVisible: false });
-      const lowerS = chartRef.current.addLineSeries({ color: bbColor, lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false });
-      upperS.setData(bb.upper);
-      midS.setData(bb.middle);
-      lowerS.setData(bb.lower);
-      overlaySeriesRef.current.set("bb_upper", upperS);
-      overlaySeriesRef.current.set("bb_mid", midS);
-      overlaySeriesRef.current.set("bb_lower", lowerS);
+      const bc = INDICATORS.bb.color;
+      const u = chartRef.current.addLineSeries({ color: bc, lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false });
+      const m = chartRef.current.addLineSeries({ color: bc, lineWidth: 1, lineStyle: LineStyle.Dotted, priceLineVisible: false, lastValueVisible: false });
+      const l = chartRef.current.addLineSeries({ color: bc, lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false });
+      u.setData(bb.upper); m.setData(bb.middle); l.setData(bb.lower);
+      overlaySeriesRef.current.set("bb_u", u); overlaySeriesRef.current.set("bb_m", m); overlaySeriesRef.current.set("bb_l", l);
     }
 
     chartRef.current.timeScale().fitContent();
   }, [candles, activeIndicators]);
 
-  // Live price update
+  // Live price
   useEffect(() => {
     if (currentPrice == null || !candleSeriesRef.current || !lastCandleRef.current) return;
-    const updated: CandlestickData = {
-      ...lastCandleRef.current,
-      close: currentPrice,
-      high: Math.max(lastCandleRef.current.high, currentPrice),
-      low: Math.min(lastCandleRef.current.low, currentPrice),
-    };
-    candleSeriesRef.current.update(updated);
-    lastCandleRef.current = updated;
+    const u: CandlestickData = { ...lastCandleRef.current, close: currentPrice, high: Math.max(lastCandleRef.current.high, currentPrice), low: Math.min(lastCandleRef.current.low, currentPrice) };
+    candleSeriesRef.current.update(u); lastCandleRef.current = u;
   }, [currentPrice]);
 
-  // 24h change
-  const change24h = candles && candles.length >= 2
-    ? ((candles[candles.length - 1].close - candles[0].close) / candles[0].close) * 100
-    : null;
+  const displayPrice = currentPrice ?? lastCandle?.close ?? 0;
 
   return (
-    <div className="card" style={{ padding: 14 }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: "#f1f5f9" }}>{pair}</span>
-          <span style={{ fontSize: 12, color: "#64748b" }}>{interval}</span>
-          {currentPrice != null && (
-            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 16, fontWeight: 700, color: "#f1f5f9" }}>
-              ${currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          )}
-          {change24h != null && (
+    <div style={S.wrapper}>
+      {/* ── Header: Pair + Price + OHLC ── */}
+      <div style={S.header}>
+        <div style={S.headerLeft}>
+          <span style={S.pair}>{pair}</span>
+          <span style={{ ...S.price, color: isUp ? "#10b981" : "#ef4444" }}>
+            {fmtPrice(displayPrice)}
+          </span>
+          {priceChangePct != null && (
             <span style={{
-              fontSize: 12, fontWeight: 600, fontFamily: "var(--font-mono, monospace)",
-              color: change24h >= 0 ? "#10b981" : "#ef4444",
+              ...S.change,
+              color: isUp ? "#10b981" : "#ef4444",
+              background: isUp ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
             }}>
-              {change24h >= 0 ? "+" : ""}{change24h.toFixed(2)}%
+              {isUp ? "+" : ""}{priceChange!.toFixed(2)} ({isUp ? "+" : ""}{priceChangePct.toFixed(2)}%)
             </span>
           )}
         </div>
+        {/* OHLC data */}
+        {lastCandle && (
+          <div style={S.ohlc}>
+            <span><span style={S.ohlcLabel}>O</span>{fmtPrice(lastCandle.open)}</span>
+            <span><span style={S.ohlcLabel}>H</span><span style={S.ohlcUp}>{fmtPrice(lastCandle.high)}</span></span>
+            <span><span style={S.ohlcLabel}>L</span><span style={S.ohlcDown}>{fmtPrice(lastCandle.low)}</span></span>
+            <span><span style={S.ohlcLabel}>C</span>{fmtPrice(lastCandle.close)}</span>
+            <span><span style={S.ohlcLabel}>V</span>{lastCandle.volume >= 1000 ? `${(lastCandle.volume / 1000).toFixed(1)}K` : lastCandle.volume.toFixed(1)}</span>
+          </div>
+        )}
       </div>
 
-      {/* Indicator Toolbar */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-        {(Object.entries(INDICATORS) as [IndicatorKey, IndicatorDef][]).map(([key, def]) => {
-          const isActive = activeIndicators.has(key);
-          return (
-            <button
-              key={key}
-              onClick={() => toggleIndicator(key)}
-              style={{
-                padding: "3px 10px",
-                borderRadius: 4,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: "pointer",
-                border: `1px solid ${isActive ? def.color : "rgba(100,116,139,0.25)"}`,
-                background: isActive ? `${def.color}20` : "transparent",
-                color: isActive ? def.color : "#64748b",
-                transition: "all 0.15s",
-              }}
-            >
-              <span style={{
-                display: "inline-block", width: 8, height: 8, borderRadius: 2,
-                background: isActive ? def.color : "#475569", marginRight: 5,
-              }} />
+      {/* ── Toolbar: Timeframes + Indicators ── */}
+      <div style={S.toolbar}>
+        <div style={S.tfGroup}>
+          {TIMEFRAMES.map((tf) => (
+            <button key={tf.value} style={S.tfBtn(interval === tf.value)} onClick={() => switchTimeframe(tf.value)}>
+              {tf.label}
+            </button>
+          ))}
+        </div>
+        <div style={S.indGroup}>
+          {(Object.entries(INDICATORS) as [IndicatorKey, { label: string; color: string; defaultOn: boolean }][]).map(([key, def]) => (
+            <button key={key} style={S.indBtn(activeIndicators.has(key), def.color)} onClick={() => toggleIndicator(key)}>
               {def.label}
             </button>
-          );
-        })}
+          ))}
+        </div>
       </div>
 
-      {/* Chart */}
-      <div className="chart-container" ref={containerRef} />
+      {/* ── Chart ── */}
+      <div style={S.chart} ref={containerRef} />
     </div>
   );
 }
