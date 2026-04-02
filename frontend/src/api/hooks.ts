@@ -66,6 +66,17 @@ export function useAccount() {
   });
 }
 
+export function usePortfolio() {
+  return useQuery<any>({
+    queryKey: ["portfolio"],
+    queryFn: async () => {
+      const { data } = await apiClient.get("/portfolio");
+      return data;
+    },
+    refetchInterval: 10_000,
+  });
+}
+
 export function useEquityCurve() {
   return useQuery<EquityPoint[]>({
     queryKey: keys.equityCurve,

@@ -143,11 +143,7 @@ class TradingEngine:
     # ------------------------------------------------------------------
 
     def start(self, db: Session) -> None:
-        """Mark the bot as running and persist state.
-
-        This is a synchronous method so it can be called directly from
-        FastAPI route handlers that inject a ``db`` dependency.
-        """
+        """Mark the bot as running and persist state."""
         settings = db.query(BotSettings).filter(BotSettings.id == 1).first()
         if settings:
             settings.is_running = True
@@ -156,7 +152,27 @@ class TradingEngine:
         self.is_running = True
         self.start_time = time.time()
 
+        # Schedule initial equity snapshot (async, runs in background)
+        asyncio.ensure_future(self._take_initial_snapshot())
+
         logger.info("Trading engine STARTED")
+
+    async def _take_initial_snapshot(self) -> None:
+        """Create an initial equity snapshot so drawdown tracking works from the start."""
+        try:
+            db = SessionLocal()
+            settings = db.query(BotSettings).filter(BotSettings.id == 1).first()
+            exchange_name = getattr(settings, 'exchange', 'binance') or 'binance'
+            active_exchange = self._get_exchange(exchange_name)
+            balance = await active_exchange.get_balance()
+            if balance > 0:
+                snapshot = EquitySnapshot(balance=balance, equity=balance, daily_pnl=0.0)
+                db.add(snapshot)
+                db.commit()
+                logger.info("Initial equity snapshot: %.2f USDT", balance)
+            db.close()
+        except Exception as exc:
+            logger.warning("Failed to create initial snapshot: %s", exc)
 
     def stop(self, db: Optional[Session] = None) -> None:
         """Stop the engine and cancel background tasks.
