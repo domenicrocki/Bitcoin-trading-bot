@@ -123,6 +123,7 @@ class TradeExecutor:
         tp3_qty = _round_qty(symbol, quantity - tp1_qty - tp2_qty)
 
         # --- Limit SELL orders for TPs ------------------------------------
+        tp_order_ids = {"TP1": "", "TP2": "", "TP3": ""}
         for tp_price, tp_qty, label in [
             (signal.take_profit_1, tp1_qty, "TP1"),
             (signal.take_profit_2, tp2_qty, "TP2"),
@@ -132,22 +133,26 @@ class TradeExecutor:
                 logger.warning("%s quantity is 0 after rounding, skipping", label)
                 continue
             try:
-                await self.exchange.place_limit_order(
+                tp_order = await self.exchange.place_limit_order(
                     symbol=symbol, side="SELL", quantity=tp_qty,
                     price=_round_price(symbol, tp_price),
                 )
+                tp_order_ids[label] = str(tp_order.get("orderId", ""))
                 logger.info(
-                    "%s SELL order placed: qty=%.8f @ %.4f", label, tp_qty, tp_price,
+                    "%s SELL order placed: qty=%.8f @ %.4f orderId=%s",
+                    label, tp_qty, tp_price, tp_order_ids[label],
                 )
             except Exception:
                 logger.exception("Failed to place %s limit SELL", label)
 
         # --- Stop-loss order -----------------------------------------------
+        sl_order_id = ""
         try:
-            await self.exchange.place_stop_loss(
+            sl_order = await self.exchange.place_stop_loss(
                 symbol=symbol, side="SELL", quantity=quantity,
                 stop_price=_round_price(symbol, signal.stop_loss),
             )
+            sl_order_id = str(sl_order.get("orderId", ""))
         except Exception:
             logger.exception("Failed to place stop-loss for long %s", symbol)
 
@@ -161,6 +166,10 @@ class TradeExecutor:
             tp1_price=signal.take_profit_1,
             tp2_price=signal.take_profit_2,
             tp3_price=signal.take_profit_3,
+            tp1_order_id=tp_order_ids.get("TP1", ""),
+            tp2_order_id=tp_order_ids.get("TP2", ""),
+            tp3_order_id=tp_order_ids.get("TP3", ""),
+            sl_order_id=sl_order_id,
             status="OPEN",
             ai_provider=settings.ai_provider,
             ai_confidence=signal.confidence,
@@ -242,6 +251,7 @@ class TradeExecutor:
         tp3_qty = _round_qty(symbol, quantity - tp1_qty - tp2_qty)
 
         # --- Limit BUY orders for TPs (shorts close by buying) ------------
+        tp_order_ids = {"TP1": "", "TP2": "", "TP3": ""}
         for tp_price, tp_qty, label in [
             (signal.take_profit_1, tp1_qty, "TP1"),
             (signal.take_profit_2, tp2_qty, "TP2"),
@@ -251,22 +261,26 @@ class TradeExecutor:
                 logger.warning("%s quantity is 0 after rounding, skipping", label)
                 continue
             try:
-                await self.exchange.place_limit_order(
+                tp_order = await self.exchange.place_limit_order(
                     symbol=symbol, side="BUY", quantity=tp_qty,
                     price=_round_price(symbol, tp_price),
                 )
+                tp_order_ids[label] = str(tp_order.get("orderId", ""))
                 logger.info(
-                    "%s BUY order placed: qty=%.8f @ %.4f", label, tp_qty, tp_price,
+                    "%s BUY order placed: qty=%.8f @ %.4f orderId=%s",
+                    label, tp_qty, tp_price, tp_order_ids[label],
                 )
             except Exception:
                 logger.exception("Failed to place %s limit BUY", label)
 
         # --- Stop-loss order (BUY to close short) --------------------------
+        sl_order_id = ""
         try:
-            await self.exchange.place_stop_loss(
+            sl_order = await self.exchange.place_stop_loss(
                 symbol=symbol, side="BUY", quantity=quantity,
                 stop_price=_round_price(symbol, signal.stop_loss),
             )
+            sl_order_id = str(sl_order.get("orderId", ""))
         except Exception:
             logger.exception("Failed to place stop-loss for short %s", symbol)
 
@@ -280,6 +294,10 @@ class TradeExecutor:
             tp1_price=signal.take_profit_1,
             tp2_price=signal.take_profit_2,
             tp3_price=signal.take_profit_3,
+            tp1_order_id=tp_order_ids.get("TP1", ""),
+            tp2_order_id=tp_order_ids.get("TP2", ""),
+            tp3_order_id=tp_order_ids.get("TP3", ""),
+            sl_order_id=sl_order_id,
             status="OPEN",
             ai_provider=settings.ai_provider,
             ai_confidence=signal.confidence,
@@ -429,23 +447,116 @@ class TradeExecutor:
     # Order fill tracking
     # -----------------------------------------------------------------
 
-    async def check_and_update_fills(self, db, trade):
-        """Check Binance for filled TP orders and update trade accordingly."""
+    async def check_and_update_fills(self, db: Session, trade: Trade) -> bool:
+        """Check exchange for filled TP/SL orders and update trade.
+
+        Returns True if the trade was fully closed (all TPs or SL hit).
+        """
+        changed = False
         try:
             open_orders = await self.exchange.get_open_orders(trade.symbol)
             open_order_ids = {str(o.get("orderId")) for o in open_orders}
 
-            # Check if TP orders have been filled (no longer in open orders)
-            # TP orders are stored as comma-separated IDs in binance_order_id
-            if not trade.binance_order_id:
-                return
+            # Check TP1
+            if not trade.tp1_filled and trade.tp1_order_id:
+                if trade.tp1_order_id not in open_order_ids:
+                    trade.tp1_filled = True
+                    changed = True
+                    logger.info("Trade #%d: TP1 FILLED (order %s)", trade.id, trade.tp1_order_id)
+                    # Move stop-loss to breakeven
+                    try:
+                        await self.update_stop_loss_to_breakeven(db, trade)
+                        logger.info("Trade #%d: SL moved to breakeven @ %.2f", trade.id, trade.entry_price)
+                    except Exception:
+                        logger.exception("Trade #%d: Failed to move SL to breakeven", trade.id)
 
-            # If trade has TP orders that are no longer open, they've been filled
-            # Update the TP fill flags and adjust quantity
-            # After TP1 fill, move stop-loss to breakeven
-            if not trade.tp1_filled:
-                # Simple heuristic: if fewer open orders than expected, TPs may have filled
-                pass  # Real implementation would track individual order IDs
+            # Check TP2
+            if not trade.tp2_filled and trade.tp2_order_id:
+                if trade.tp2_order_id not in open_order_ids:
+                    trade.tp2_filled = True
+                    changed = True
+                    logger.info("Trade #%d: TP2 FILLED (order %s)", trade.id, trade.tp2_order_id)
+
+            # Check TP3
+            if not trade.tp3_filled and trade.tp3_order_id:
+                if trade.tp3_order_id not in open_order_ids:
+                    trade.tp3_filled = True
+                    changed = True
+                    logger.info("Trade #%d: TP3 FILLED (order %s)", trade.id, trade.tp3_order_id)
+
+            # Check SL (if SL order no longer open, position was stopped out)
+            if trade.sl_order_id and trade.sl_order_id not in open_order_ids:
+                # SL was hit — check if it's not because TPs cancelled it
+                if not (trade.tp1_filled and trade.tp2_filled and trade.tp3_filled):
+                    logger.info("Trade #%d: STOP-LOSS HIT (order %s)", trade.id, trade.sl_order_id)
+                    # Close trade at stop-loss price
+                    trade.exit_price = trade.stop_loss
+                    is_long = trade.side == "BUY"
+                    if is_long:
+                        trade.pnl = round((trade.stop_loss - trade.entry_price) * trade.quantity, 2)
+                    else:
+                        trade.pnl = round((trade.entry_price - trade.stop_loss) * trade.quantity, 2)
+                    trade.pnl_pct = round((trade.pnl / (trade.entry_price * trade.quantity)) * 100, 2) if trade.entry_price * trade.quantity > 0 else 0
+                    trade.status = "CLOSED"
+                    trade.closed_at = datetime.now(timezone.utc)
+                    changed = True
+                    # Update daily PnL
+                    self._update_daily_pnl(db, trade.pnl)
+
+            # If all 3 TPs filled → auto-close trade
+            if trade.tp1_filled and trade.tp2_filled and trade.tp3_filled and trade.status == "OPEN":
+                logger.info("Trade #%d: ALL TPs FILLED — closing trade", trade.id)
+                # Calculate weighted average exit price
+                tp1_pct = 0.25
+                tp2_pct = 0.50
+                tp3_pct = 0.25
+                avg_exit = (
+                    (trade.tp1_price or 0) * tp1_pct +
+                    (trade.tp2_price or 0) * tp2_pct +
+                    (trade.tp3_price or 0) * tp3_pct
+                )
+                trade.exit_price = round(avg_exit, 2)
+                is_long = trade.side == "BUY"
+                if is_long:
+                    trade.pnl = round((avg_exit - trade.entry_price) * trade.quantity, 2)
+                else:
+                    trade.pnl = round((trade.entry_price - avg_exit) * trade.quantity, 2)
+                trade.pnl_pct = round((trade.pnl / (trade.entry_price * trade.quantity)) * 100, 2) if trade.entry_price * trade.quantity > 0 else 0
+                trade.status = "CLOSED"
+                trade.closed_at = datetime.now(timezone.utc)
+                # Cancel remaining SL order
+                if trade.sl_order_id and trade.sl_order_id in open_order_ids:
+                    try:
+                        await self.exchange.cancel_order(trade.symbol, trade.sl_order_id)
+                    except Exception:
+                        logger.exception("Failed to cancel SL after all TPs filled")
+                # Update daily PnL
+                self._update_daily_pnl(db, trade.pnl)
+
+            if changed:
+                db.commit()
+                # Broadcast update
+                await self.ws_manager.broadcast_position_update({
+                    "id": trade.id,
+                    "tp1_filled": trade.tp1_filled,
+                    "tp2_filled": trade.tp2_filled,
+                    "tp3_filled": trade.tp3_filled,
+                    "status": trade.status,
+                    "pnl": trade.pnl,
+                })
+
+            return trade.status == "CLOSED"
 
         except Exception as e:
-            logger.error(f"Failed to check fills for trade {trade.id}: {e}")
+            logger.error("Failed to check fills for trade #%d: %s", trade.id, e)
+            return False
+
+    def _update_daily_pnl(self, db: Session, pnl: float) -> None:
+        """Update the daily PnL record."""
+        today_str = date.today().isoformat()
+        daily = db.query(DailyPnl).filter(DailyPnl.date == today_str).first()
+        if daily:
+            daily.realized_pnl += pnl
+            daily.trade_count += 1
+        else:
+            db.add(DailyPnl(date=today_str, realized_pnl=pnl, trade_count=1))

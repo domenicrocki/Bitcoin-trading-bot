@@ -266,6 +266,16 @@ class TradingEngine:
             return
 
         # ---------------------------------------------------------------
+        # 2b. Check fills on existing open trades
+        # ---------------------------------------------------------------
+        open_trades = db.query(Trade).filter(Trade.status == "OPEN").all()
+        for ot in open_trades:
+            try:
+                await self.trade_executor.check_and_update_fills(db, ot)
+            except Exception as exc:
+                logger.error("Fill check failed for trade #%d: %s", ot.id, exc)
+
+        # ---------------------------------------------------------------
         # 3. Compute technical indicators
         # ---------------------------------------------------------------
         try:
