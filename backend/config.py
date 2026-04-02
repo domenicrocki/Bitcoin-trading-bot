@@ -1,6 +1,11 @@
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
 from pydantic_settings import BaseSettings
 from typing import List
+
+# Central timezone used across the entire bot (MEZ / CET / CEST).
+BOT_TIMEZONE = ZoneInfo("Europe/Berlin")
 
 # Resolve .env: check both backend/.env and project-root/.env
 _THIS_DIR = Path(__file__).resolve().parent

@@ -5,11 +5,12 @@ and signal validation before any trade is executed.
 """
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import datetime
 from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
+from config import BOT_TIMEZONE
 from models import BotSettings, DailyPnl, EquitySnapshot, Trade
 from schemas import Signal
 
@@ -140,13 +141,13 @@ class RiskManager:
         ``is_warning`` is ``True`` when the loss exceeds the configured
         ``daily_loss_limit_pct`` of the latest equity snapshot.
         """
-        today_utc = datetime.now(timezone.utc).date()
-        today_str = today_utc.isoformat()
+        today_berlin = datetime.now(BOT_TIMEZONE).date()
+        today_str = today_berlin.isoformat()
         row = db.query(DailyPnl).filter(DailyPnl.date == today_str).first()
         daily_pnl = row.realized_pnl if row else 0.0
 
         # Also sum closed trades from today that may not yet be flushed
-        today_start = datetime.combine(today_utc, datetime.min.time())
+        today_start = datetime.combine(today_berlin, datetime.min.time())
         closed_today_pnl = (
             db.query(Trade)
             .filter(

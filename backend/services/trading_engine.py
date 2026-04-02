@@ -9,11 +9,12 @@ Exposes ``engine`` as a module-level singleton consumed by the FastAPI router.
 import asyncio
 import logging
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 from sqlalchemy.orm import Session
 
+from config import BOT_TIMEZONE
 from ai import get_ai_provider
 from ai.prompt_builder import build_analysis_prompt
 from ai.response_parser import parse_ai_response
@@ -420,7 +421,7 @@ class TradingEngine:
             )
             return
 
-        self.last_analysis = datetime.now(timezone.utc)
+        self.last_analysis = datetime.now(BOT_TIMEZONE)
 
         # ---------------------------------------------------------------
         # 9. Broadcast the raw signal to all WS clients
@@ -542,7 +543,7 @@ class TradingEngine:
             )
             equity = balance + unrealized_pnl
 
-            today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            today_str = datetime.now(BOT_TIMEZONE).strftime("%Y-%m-%d")
             daily_record = (
                 db.query(DailyPnl).filter(DailyPnl.date == today_str).first()
             )

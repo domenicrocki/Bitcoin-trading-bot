@@ -2,8 +2,10 @@
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
+
+from config import BOT_TIMEZONE
 
 from fastapi import WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
@@ -135,8 +137,8 @@ class ConnectionManager:
 # ======================================================================
 
 def _now_iso() -> str:
-    """Return the current UTC time as an ISO-8601 string."""
-    return datetime.now(timezone.utc).isoformat()
+    """Return the current Europe/Berlin time as an ISO-8601 string."""
+    return datetime.now(BOT_TIMEZONE).isoformat()
 
 
 def _to_iso(value: Any) -> str:
@@ -146,5 +148,5 @@ def _to_iso(value: Any) -> str:
     if isinstance(value, datetime):
         return value.isoformat()
     if isinstance(value, (int, float)):
-        return datetime.fromtimestamp(value / 1000, tz=timezone.utc).isoformat()
+        return datetime.fromtimestamp(value / 1000, tz=BOT_TIMEZONE).isoformat()
     return str(value)

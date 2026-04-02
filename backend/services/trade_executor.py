@@ -6,11 +6,12 @@ placement, breakeven updates, and position closure.
 
 import logging
 import math
-from datetime import date, datetime, timezone
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from config import BOT_TIMEZONE
 from models import BotSettings, DailyPnl, Trade
 from schemas import Signal
 from services.exchange import BinanceExchange
@@ -369,10 +370,10 @@ class TradeExecutor:
         trade.pnl = round(pnl, 4)
         trade.pnl_pct = round(pnl_pct, 4)
         trade.status = "CLOSED"
-        trade.closed_at = datetime.now(timezone.utc)
+        trade.closed_at = datetime.now(BOT_TIMEZONE)
 
         # Update daily PnL record
-        today_str = date.today().isoformat()
+        today_str = datetime.now(BOT_TIMEZONE).date().isoformat()
         daily = db.query(DailyPnl).filter(DailyPnl.date == today_str).first()
         if daily:
             daily.realized_pnl += trade.pnl
@@ -498,7 +499,7 @@ class TradeExecutor:
                         trade.pnl = round((trade.entry_price - trade.stop_loss) * trade.quantity, 2)
                     trade.pnl_pct = round((trade.pnl / (trade.entry_price * trade.quantity)) * 100, 2) if trade.entry_price * trade.quantity > 0 else 0
                     trade.status = "CLOSED"
-                    trade.closed_at = datetime.now(timezone.utc)
+                    trade.closed_at = datetime.now(BOT_TIMEZONE)
                     changed = True
                     # Update daily PnL
                     self._update_daily_pnl(db, trade.pnl)
@@ -523,7 +524,7 @@ class TradeExecutor:
                     trade.pnl = round((trade.entry_price - avg_exit) * trade.quantity, 2)
                 trade.pnl_pct = round((trade.pnl / (trade.entry_price * trade.quantity)) * 100, 2) if trade.entry_price * trade.quantity > 0 else 0
                 trade.status = "CLOSED"
-                trade.closed_at = datetime.now(timezone.utc)
+                trade.closed_at = datetime.now(BOT_TIMEZONE)
                 # Cancel remaining SL order
                 if trade.sl_order_id and trade.sl_order_id in open_order_ids:
                     try:
@@ -553,7 +554,7 @@ class TradeExecutor:
 
     def _update_daily_pnl(self, db: Session, pnl: float) -> None:
         """Update the daily PnL record."""
-        today_str = date.today().isoformat()
+        today_str = datetime.now(BOT_TIMEZONE).date().isoformat()
         daily = db.query(DailyPnl).filter(DailyPnl.date == today_str).first()
         if daily:
             daily.realized_pnl += pnl
