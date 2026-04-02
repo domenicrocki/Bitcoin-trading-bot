@@ -162,8 +162,9 @@ async def get_portfolio(db: Session = Depends(get_db)):
     drawdown = ((peak_equity - equity) / peak_equity * 100) if peak_equity > 0 else 0
 
     # Daily PnL
-    from datetime import datetime as dt, timezone as tz
-    today_str = dt.now(tz.utc).date().isoformat()
+    from datetime import datetime as dt
+    from config import BOT_TIMEZONE
+    today_str = dt.now(BOT_TIMEZONE).date().isoformat()
     daily = db.query(DailyPnl).filter(DailyPnl.date == today_str).first()
     daily_pnl = daily.realized_pnl if daily else 0.0
 
